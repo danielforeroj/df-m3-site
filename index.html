@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Daniel Forero • Material 3 Web Portfolio</title>
+    <meta name="description" content="I turn Web3 ideas into real-world businesses—and then make sure the world hears about them.">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="#">
+    <meta property="og:title" content="Daniel Forero • Material 3 Web Portfolio">
+    <meta property="og:description" content="I turn Web3 ideas into real-world businesses—and then make sure the world hears about them.">
+    <meta property="og:image" content="https://picsum.photos/1200/630">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="#">
+    <meta property="twitter:title" content="Daniel Forero • Material 3 Web Portfolio">
+    <meta property="twitter:description" content="I turn Web3 ideas into real-world businesses—and then make sure the world hears about them.">
+    <meta property="twitter:image" content="https://picsum.photos/1200/630">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <style>
+      /* Material 3 Inspired Theme Tokens */
+      :root {
+        /* Base colors that are consistent across themes */
+        --md-sys-color-error: #BA1A1A;
+        --md-sys-color-on-error: #FFFFFF;
+        --md-sys-color-error-container: #FFDAD6;
+        --md-sys-color-on-error-container: #410002;
+        --md-sys-color-background: #F8F9FA;
+        --md-sys-color-on-background: #1A1C1E;
+        --md-sys-color-surface: #F8F9FA;
+        --md-sys-color-on-surface: #1A1C1E;
+        --md-sys-color-surface-variant: #E1E2E6;
+        --md-sys-color-on-surface-variant: #43474E;
+        --md-sys-color-outline: #74777F;
+        --md-sys-color-shadow: #000000;
+        --md-sys-color-inverse-surface: #2F3033;
+        --md-sys-color-inverse-on-surface: #F1F0F4;
+        --md-sys-color-inverse-primary: #BDC1C6;
+
+        font-family: 'Inter', sans-serif;
+      }
+
+      .dark {
+         /* Base dark colors */
+        --md-sys-color-error: #FFB4AB;
+        --md-sys-color-on-error: #690005;
+        --md-sys-color-error-container: #93000A;
+        --md-sys-color-on-error-container: #FFDAD6;
+        --md-sys-color-background: #1A1C1E;
+        --md-sys-color-on-background: #E3E2E6;
+        --md-sys-color-surface: #1A1C1E;
+        --md-sys-color-on-surface: #E3E2E6;
+        --md-sys-color-surface-variant: #43474E;
+        --md-sys-color-on-surface-variant: #C4C6CF;
+        --md-sys-color-outline: #8E9199;
+        --md-sys-color-shadow: #000000;
+        --md-sys-color-inverse-surface: #E3E2E6;
+        --md-sys-color-inverse-on-surface: #1A1C1E;
+        --md-sys-color-inverse-primary: #5F6368;
+      }
+      body {
+        background-color: var(--md-sys-color-background);
+        color: var(--md-sys-color-on-background);
+      }
+      .material-symbols-outlined {
+        font-variation-settings:
+        'FILL' 0,
+        'wght' 400,
+        'GRAD' 0,
+        'opsz' 24
+      }
+
+      /* Logo Slider Animation */
+      @keyframes scroll {
+        from { transform: translateX(0); }
+        to { transform: translateX(-100%); }
+      }
+      .animate-scroll {
+        animation: scroll 60s linear infinite;
+      }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.9.5",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.28.0"
+  }
+}
+</script>
+</head>
+<body class="antialiased">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+</body>
+</html>
