@@ -35,15 +35,15 @@ export const initialHomePageData: HomePageData = {
     text: "I'm looking for relentless founders with a clear vision and the grit to execute."
   },
   socialLinks: [
-    { id: '1', name: 'Instagram', url: '#' },
-    { id: '2', name: 'X', url: '#' },
-    { id: '3', name: 'LinkedIn', url: '#' },
-    { id: '4', name: 'Telegram', url: '#' },
+    { id: '1', name: 'Instagram', url: 'https://www.instagram.com/danielforeroj/' },
+    { id: '2', name: 'X', url: 'https://www.x.com/danielforeroj/' },
+    { id: '3', name: 'LinkedIn', url: 'https://www.linkedin.com/in/danielforeroj/' },
+    { id: '4', name: 'Telegram', url: 'https://t.me/danielforeroj/' },
   ],
   heroButton1: {
     id: 'hero1',
     text: 'Get in touch',
-    url: 'mailto:daniel@example.com',
+    url: 'mailto:hello@danielforeroj.com',
     variant: 'filled-to-ghost',
     icon: 'email',
     enabled: true,
@@ -51,7 +51,7 @@ export const initialHomePageData: HomePageData = {
   heroButton2: {
     id: 'hero2',
     text: 'LinkedIn',
-    url: '#',
+    url: 'https://www.linkedin.com/in/danielforeroj/',
     variant: 'filled-to-ghost',
     enabled: true,
   },
@@ -61,28 +61,28 @@ export const initialHomePageData: HomePageData = {
       title: "Founder & CEO at Keystate",
       description: "A dual-track platform that fractionalizes yield bearing real estate for everyday investors from $50, and issues decentralized, crypto-collateralized mortgages, making property ownership and liquidity trully accessible.",
       cta: "Learn More About Keystate",
-      url: "#"
+      url: "https://keystate.co"
     },
     {
       id: '2',
       title: "Managing Partner at Multiplied (DMC)",
       description: "The marketing & PR agency behind headline-grabbing launches for protocols and brands alike, including Solana’s wormhole, Immutable X, Quentin Tarantino’s NFT, among many others.",
       cta: "Learn More About Multiplied (DMC)",
-      url: "#"
+      url: "https://multipliedhq.com"
     },
     {
       id: '3',
       title: "Partner at SpaceDev",
       description: "The second largest DevShop in LATAM. Worked with Aptos, Rarible, Apple, Google, Chevron, Blockus, etc.",
       cta: "Learn More About SpaceDev",
-      url: "#"
+      url: "https://spacedev.io"
     },
     {
       id: '4',
       title: "Partner at Capa",
       description: "Leveraging stablecoin infrastructure to move money across LATAM with zero FX drag. Raised USD$3M in pre-seed.",
       cta: "Learn More About Capa",
-      url: "#"
+      url: "https://capa.fi"
     }
   ]
 };
