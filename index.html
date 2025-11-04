@@ -103,6 +103,7 @@
       const defaultPalette = ['#6B7280', '#3B82F6', '#22C55E', '#0EA5E9', '#EF4444'];
       
       // IMMEDIATELY define window.DFTheme with core functions and defaults
+      // This is used by the initial script and can be used by the React app if needed.
       window.DFTheme = {
         applyTheme,
         applyAccent,
@@ -115,7 +116,7 @@
         palette: defaultPalette
       };
 
-      // Synchronously apply initial theme from localStorage or defaults
+      // Synchronously apply initial theme from localStorage or defaults to prevent FOUC
       applyAccent(get('df_accent') || defaultAccent);
       applyTheme(get('df_theme') || defaultTheme);
 
@@ -291,30 +292,5 @@
 <body class="antialiased">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
-
-    <script>
-    document.addEventListener('click', (e) => {
-      const root = document.getElementById('theme-fab');
-      if (!root) return;
-
-      let themeChanged = false;
-      const themeButton = e.target.closest('[data-theme]');
-      const accentButton = e.target.closest('[data-accent]');
-
-      if (themeButton && root.contains(themeButton)) {
-        e.preventDefault();
-        window.DFTheme?.applyTheme(themeButton.dataset.theme, true);
-        themeChanged = true;
-      } else if (accentButton && root.contains(accentButton)) {
-        e.preventDefault();
-        window.DFTheme?.applyAccent(accentButton.dataset.accent, true);
-        themeChanged = true;
-      }
-
-      if (themeChanged) {
-        window.dispatchEvent(new CustomEvent('df-theme-changed'));
-      }
-    });
-    </script>
 </body>
 </html>
