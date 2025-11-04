@@ -69,10 +69,10 @@ const ThemePicker: React.FC = () => {
   ];
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 relative">
+    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-4">
       {isOpen && (
         <div 
-          className="absolute bottom-full right-0 mb-4 p-3 rounded-2xl shadow-xl transition-all"
+          className="p-3 rounded-2xl shadow-xl transition-all"
           style={{ backgroundColor: 'var(--md-sys-color-surface-variant)'}}
         >
           <div className="flex flex-col items-center gap-3">
