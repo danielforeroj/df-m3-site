@@ -36,7 +36,7 @@ const HomePage: React.FC<HomePageProps> = ({ data }) => {
             </Button>
           )}
           {heroButton2.enabled && (
-            <Button as="a" href={heroButton2.url} variant={heroButton2.variant} icon={heroButton2.icon}>
+            <Button as="a" href={heroButton2.url} variant={heroButton2.variant} icon={heroButton2.icon} target="_blank" rel="noopener noreferrer">
               {heroButton2.text}
             </Button>
           )}
