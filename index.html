@@ -293,10 +293,27 @@
     <script type="module" src="/index.tsx"></script>
 
     <script>
-    document.addEventListener('click',(e)=>{
-      const root=document.getElementById('theme-fab'); if(!root) return;
-      const th=e.target.closest('[data-theme]'); if(th && root.contains(th)){ e.preventDefault(); window.DFTheme?.applyTheme(th.dataset.theme, true); return; }
-      const ac=e.target.closest('[data-accent]'); if(ac && root.contains(ac)){ e.preventDefault(); window.DFTheme?.applyAccent(ac.dataset.accent, true); }
+    document.addEventListener('click', (e) => {
+      const root = document.getElementById('theme-fab');
+      if (!root) return;
+
+      let themeChanged = false;
+      const themeButton = e.target.closest('[data-theme]');
+      const accentButton = e.target.closest('[data-accent]');
+
+      if (themeButton && root.contains(themeButton)) {
+        e.preventDefault();
+        window.DFTheme?.applyTheme(themeButton.dataset.theme, true);
+        themeChanged = true;
+      } else if (accentButton && root.contains(accentButton)) {
+        e.preventDefault();
+        window.DFTheme?.applyAccent(accentButton.dataset.accent, true);
+        themeChanged = true;
+      }
+
+      if (themeChanged) {
+        window.dispatchEvent(new CustomEvent('df-theme-changed'));
+      }
     });
     </script>
 </body>

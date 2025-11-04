@@ -24,6 +24,20 @@ const ScrollToTop = () => {
 const App: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [homepageData, setHomepageData] = useState<HomePageData>(initialHomePageData);
+  const [, setForceUpdate] = useState(0);
+
+  // This effect connects the external theme switcher to React's render cycle.
+  // When the theme script in index.html dispatches 'df-theme-changed',
+  // we trigger a state update to force a re-render.
+  useEffect(() => {
+    const handleThemeChange = () => {
+      setForceUpdate(c => c + 1);
+    };
+    window.addEventListener('df-theme-changed', handleThemeChange);
+    return () => {
+      window.removeEventListener('df-theme-changed', handleThemeChange);
+    };
+  }, []);
 
   const handleLogin = () => setIsLoggedIn(true);
   const handleLogout = () => setIsLoggedIn(false);
