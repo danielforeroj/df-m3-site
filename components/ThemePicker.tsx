@@ -87,17 +87,15 @@ const ThemePicker: React.FC = () => {
               </span>
             </button>
             <div className="h-px w-full my-1" style={{backgroundColor: 'var(--md-sys-color-outline)'}}></div>
-            <div className="flex flex-col items-center gap-3">
-              {themeOptions.map(option => (
-                <button
-                  key={option.name}
-                  onClick={() => applyTheme(option.name)}
-                  className={`w-8 h-8 rounded-full transition-all duration-200 border-2 ${activeTheme === option.name ? 'border-[var(--md-sys-color-primary)] scale-110' : 'border-transparent hover:scale-110'}`}
-                  style={{ backgroundColor: option.color }}
-                  aria-label={`Select ${option.name} theme`}
-                />
-              ))}
-            </div>
+            {themeOptions.map(option => (
+              <button
+                key={option.name}
+                onClick={() => applyTheme(option.name)}
+                className={`w-8 h-8 rounded-full transition-all duration-200 border-2 ${activeTheme === option.name ? 'border-[var(--md-sys-color-primary)] scale-110' : 'border-transparent hover:scale-110'}`}
+                style={{ backgroundColor: option.color }}
+                aria-label={`Select ${option.name} theme`}
+              />
+            ))}
           </div>
         </div>
       )}
