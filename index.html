@@ -2,164 +2,111 @@
 <html lang="en">
 <head>
     <script>
+    /* DF settings/theme bootstrap (CORS-aware):
+     * - Uses a conditional fetch to handle different environments.
+     * - On the live domain, it makes a standard same-origin request.
+     * - On preview domains (like AI Studio), it makes a cross-origin CORS request.
+     * - This robustly handles CORS policies and prevents "Failed to fetch" errors.
+     */
     (function () {
-      const set=(k,v)=>localStorage.setItem(k,v), get=(k)=>localStorage.getItem(k);
+      const set = (k,v)=>localStorage.setItem(k,v);
+      const get = (k)=>localStorage.getItem(k);
 
-      // --- Color Conversion & Palette Generation ---
-      function hexToRgb(hex) {
-          let r = 0, g = 0, b = 0;
-          if (hex.length === 4) { r = "0x" + hex[1] + hex[1]; g = "0x" + hex[2] + hex[2]; b = "0x" + hex[3] + hex[3]; }
-          else if (hex.length === 7) { r = "0x" + hex[1] + hex[2]; g = "0x" + hex[3] + hex[4]; b = "0x" + hex[5] + hex[6]; }
-          return { r: +r, g: +g, b: +b };
-      }
-      function rgbToHex(r, g, b) { return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase(); }
-      function rgbToHsl(r, g, b) {
-          r /= 255; g /= 255; b /= 255;
-          const max = Math.max(r, g, b), min = Math.min(r, g, b);
-          let h, s, l = (max + min) / 2;
-          if (max === min) { h = s = 0; }
-          else {
-              const d = max - min;
-              s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-              switch (max) {
-                  case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-                  case g: h = (b - r) / d + 2; break;
-                  case b: h = (r - g) / d + 4; break;
-              }
-              h /= 6;
-          }
-          return { h: h * 360, s: s * 100, l: l * 100 };
-      }
-      function hslToRgb(h, s, l) {
-          s /= 100; l /= 100;
-          let c = (1 - Math.abs(2 * l - 1)) * s, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = l - c / 2, r = 0, g = 0, b = 0;
-          if (0 <= h && h < 60) { [r, g, b] = [c, x, 0]; } else if (60 <= h && h < 120) { [r, g, b] = [x, c, 0]; } else if (120 <= h && h < 180) { [r, g, b] = [0, c, x]; } else if (180 <= h && h < 240) { [r, g, b] = [0, x, c]; } else if (240 <= h && h < 300) { [r, g, b] = [x, 0, c]; } else if (300 <= h && h < 360) { [r, g, b] = [c, 0, x]; }
-          return { r: Math.round((r + m) * 255), g: Math.round((g + m) * 255), b: Math.round((b + m) * 255) };
-      }
-      function generatePalette(sourceHex) {
-          const { r, g, b } = hexToRgb(sourceHex);
-          const { h, s } = rgbToHsl(r, g, b);
-          const p = {};
-          const tones = {
-              primary_light: 40, on_primary_light: 100, primary_container_light: 90, on_primary_container_light: 10,
-              secondary_light: 40, on_secondary_light: 100, secondary_container_light: 90, on_secondary_container_light: 10,
-              tertiary_light: 40, on_tertiary_light: 100, tertiary_container_light: 90, on_tertiary_container_light: 10,
-              primary_dark: 80, on_primary_dark: 20, primary_container_dark: 30, on_primary_container_dark: 90,
-              secondary_dark: 80, on_secondary_dark: 20, secondary_container_dark: 30, on_secondary_container_dark: 90,
-              tertiary_dark: 80, on_tertiary_dark: 20, tertiary_container_dark: 30, on_tertiary_container_dark: 90,
-          };
-          for (const [key, tone] of Object.entries(tones)) {
-              let hue = h;
-              if (key.startsWith('secondary')) hue = (h + 60) % 360;
-              if (key.startsWith('tertiary')) hue = (h - 60 + 360) % 360;
-              const sat = key.includes('container') ? Math.min(s, 48) : s;
-              const rgb = hslToRgb(hue, sat, tone);
-              p[key] = rgbToHex(rgb.r, rgb.g, rgb.b);
-          }
-          return p;
-      }
-
-      function applyAccent(hex, persist = false) {
-          if (!hex) return;
-          document.documentElement.style.setProperty('--accent',hex);
-          const p = generatePalette(hex);
-          const styleId = 'df-dynamic-theme';
-          let styleEl = document.getElementById(styleId);
-          if (!styleEl) {
-              styleEl = document.createElement('style');
-              styleEl.id = styleId;
-              document.head.appendChild(styleEl);
-          }
-          styleEl.textContent = `
-            html[data-theme="light"] {
-              --md-sys-color-primary: ${p.primary_light}; --md-sys-color-on-primary: ${p.on_primary_light}; --md-sys-color-primary-container: ${p.primary_container_light}; --md-sys-color-on-primary-container: ${p.on_primary_container_light};
-              --md-sys-color-secondary: ${p.secondary_light}; --md-sys-color-on-secondary: ${p.on_secondary_light}; --md-sys-color-secondary-container: ${p.secondary_container_light}; --md-sys-color-on-secondary-container: ${p.on_secondary_container_light};
-              --md-sys-color-tertiary: ${p.tertiary_light}; --md-sys-color-on-tertiary: ${p.on_tertiary_light}; --md-sys-color-tertiary-container: ${p.tertiary_container_light}; --md-sys-color-on-tertiary-container: ${p.on_tertiary_container_light};
-            }
-            html[data-theme="dark"] {
-              --md-sys-color-primary: ${p.primary_dark}; --md-sys-color-on-primary: ${p.on_primary_dark}; --md-sys-color-primary-container: ${p.primary_container_dark}; --md-sys-color-on-primary-container: ${p.on_primary_container_dark};
-              --md-sys-color-secondary: ${p.secondary_dark}; --md-sys-color-on-secondary: ${p.on_secondary_dark}; --md-sys-color-secondary-container: ${p.secondary_container_dark}; --md-sys-color-on-secondary-container: ${p.on_secondary_container_dark};
-              --md-sys-color-tertiary: ${p.tertiary_dark}; --md-sys-color-on-tertiary: ${p.on_tertiary_dark}; --md-sys-color-tertiary-container: ${p.tertiary_container_dark}; --md-sys-color-on-tertiary-container: ${p.on_tertiary_container_dark};
-            }`;
+      function applyAccent(hex, persist=false) {
+        if (hex) {
+          document.documentElement.style.setProperty('--accent', hex);
           if (persist) set('df_accent', hex);
-      }
-      
-      function applyTheme(mode, persist = false) {
-          const r = document.documentElement;
-          let finalMode = mode;
-          if (mode === 'system') {
-              finalMode = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-          }
-          r.dataset.theme = finalMode;
-          r.classList.remove('light', 'dark');
-          if (finalMode === 'light') r.classList.add('light');
-          if (finalMode === 'dark') r.classList.add('dark');
-          if (persist) set('df_theme', mode);
+        }
       }
 
-      // --- Initial Setup & Defaults ---
-      const defaultTheme = 'system';
-      const defaultAccent = '#3B82F6';
-      const defaultPalette = ['#6B7280', '#3B82F6', '#22C55E', '#0EA5E9', '#EF4444'];
-      
-      // IMMEDIATELY define window.DFTheme with core functions and defaults
-      // This is used by the initial script and can be used by the React app if needed.
-      window.DFTheme = {
-        applyTheme,
-        applyAccent,
-        resetToDefaults: () => {
-          localStorage.removeItem('df_theme');
-          localStorage.removeItem('df_accent');
-          applyTheme(defaultTheme, true);
-          applyAccent(defaultAccent, true);
-        },
-        palette: defaultPalette
-      };
+      function applyTheme(mode, persist=false) {
+        const root = document.documentElement; // mode: system | light | dark
+        root.dataset.theme = mode;
+        root.classList.remove('light','dark');
+        if (mode === 'light') root.classList.add('light');
+        if (mode === 'dark')  root.classList.add('dark');
+        if (persist) set('df_theme', mode);
+      }
 
-      // Synchronously apply initial theme from localStorage or defaults to prevent FOUC
-      applyAccent(get('df_accent') || defaultAccent);
-      applyTheme(get('df_theme') || defaultTheme);
-
-      // Add media query listener for system theme changes
-      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-          if (get('df_theme') === 'system') { applyTheme('system'); }
-      });
-      
-      // --- Asynchronously load and apply CMS settings ---
       async function loadSettings() {
-          try {
-              const r = await fetch('/api/settings/get.php', {credentials: 'include'});
-              const d = await r.json();
-              const s = d.settings || {};
-              window.__siteSettings = s;
-              
-              if(s.seo?.site_title) document.title = s.seo.site_title;
-              if(s.seo?.site_description){ let m = document.querySelector('meta[name="description"]'); if(!m){ m = document.createElement('meta'); m.name = 'description'; document.head.appendChild(m); } m.setAttribute('content', s.seo.site_description); }
-              
-              const adminTheme = s.branding?.theme_default || defaultTheme;
-              const adminAccent = s.branding?.accent_default || defaultAccent;
+        let API_BASE = '';
+        let fetchOpts = {};
+        const isLive = window.location.hostname.includes('danielforeroj.com');
 
-              // Re-apply theme only if localStorage is not set, using CMS values.
-              if (!get('df_accent')) applyAccent(adminAccent);
-              if (!get('df_theme')) applyTheme(adminTheme);
-              
-              if(s.pixels?.gtm_id){ (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer',s.pixels.gtm_id); }
-              if(s.pixels?.ga4_id){ const g = document.createElement('script'); g.async = true; g.src = 'https://www.googletagmanager.com/gtag/js?id=' + s.pixels.ga4_id; document.head.appendChild(g); window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', s.pixels.ga4_id); }
-              if(s.pixels?.meta_pixel_id){ !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js'); fbq('init', s.pixels.meta_pixel_id); fbq('track','PageView'); }
-              if(s.pixels?.custom_head_html){ const div = document.createElement('div'); div.innerHTML = s.pixels.custom_head_html; [...div.childNodes].forEach(n => document.head.appendChild(n)); }
-              
-              // Update DFTheme with CMS-specifics
-              window.DFTheme.palette = s.branding?.palette?.length ? s.branding.palette : defaultPalette;
-              window.DFTheme.resetToDefaults = () => {
-                localStorage.removeItem('df_theme');
-                localStorage.removeItem('df_accent');
-                applyTheme(adminTheme, true);
-                applyAccent(adminAccent, true);
-              };
-          } catch(e) { 
-            console.error('Settings bootstrap failed, using defaults.', e);
+        if (isLive) {
+          // On the live domain, use a relative path (no CORS needed).
+          API_BASE = '';
+        } else {
+          // On preview/dev domains, use the full URL with CORS.
+          API_BASE = 'https://danielforeroj.com';
+          fetchOpts = { mode: 'cors', credentials: 'omit' };
+        }
+
+        try {
+          const r = await fetch(`${API_BASE}/api/settings/get.php`, fetchOpts);
+          if (!r.ok) {
+            throw new Error(`Network response was not ok, status: ${r.status}`);
           }
+          const d = await r.json();
+          const s = d.settings || {};
+          window.__siteSettings = s;
+
+          // SEO defaults (overridable by admin)
+          if (s.seo?.site_title)       document.title = s.seo.site_title;
+          if (s.seo?.site_description) {
+            let m=document.querySelector('meta[name="description"]');
+            if(!m){ m=document.createElement('meta'); m.name='description'; document.head.appendChild(m); }
+            m.setAttribute('content', s.seo.site_description);
+          }
+
+          // Defaults from admin… (with visitor overrides)
+          const adminTheme  = s.branding?.theme_default  || 'system';
+          const adminAccent = s.branding?.accent_default || '#3B82F6';
+
+          applyTheme(get('df_theme')   || adminTheme);
+          applyAccent(get('df_accent') || adminAccent);
+
+          // Optional pixels
+          if (s.pixels?.gtm_id) {
+            (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});
+              var f=d.getElementsByTagName(s)[0], j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:''; j.async=true;
+              j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl; f.parentNode.insertBefore(j,f);
+            })(window,document,'script','dataLayer', s.pixels.gtm_id);
+          }
+          if (s.pixels?.ga4_id) {
+            const g=document.createElement('script'); g.async=true; g.src='https://www.googletagmanager.com/gtag/js?id='+s.pixels.ga4_id;
+            document.head.appendChild(g);
+            window.dataLayer=window.dataLayer||[]; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', s.pixels.ga4_id);
+          }
+          if (s.pixels?.meta_pixel_id) {
+            !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+              n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+              n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+              t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)
+            }(window, document,'script','https://connect.facebook.net/en_US/fbevents.js');
+            fbq('init', s.pixels.meta_pixel_id); fbq('track', 'PageView');
+          }
+          if (s.pixels?.custom_head_html) {
+            const div=document.createElement('div'); div.innerHTML=s.pixels.custom_head_html;
+            [...div.childNodes].forEach(n=>document.head.appendChild(n));
+          }
+
+          // Expose helpers for the floating palette
+          window.DFTheme = {
+            applyTheme, applyAccent,
+            resetToDefaults() {
+              localStorage.removeItem('df_theme');
+              localStorage.removeItem('df_accent');
+              applyTheme(adminTheme);
+              applyAccent(adminAccent);
+            },
+            palette: s.branding?.palette || []
+          };
+        } catch (e) {
+          console.error('settings bootstrap failed', e);
+        }
       }
+
       loadSettings();
     })();
     </script>
@@ -292,5 +239,29 @@
 <body class="antialiased">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
+<script>
+/* Hook clicks from your floating palette.
+ * Give its container id="theme-fab".
+ * Add data-theme="light|dark|system" on the theme switch control(s).
+ * Add data-accent="#HEX" on each color dot.
+ */
+document.addEventListener('click', (e) => {
+  const root = document.getElementById('theme-fab');
+  if (!root) return;
+
+  const th = e.target.closest('[data-theme]');
+  if (th && root.contains(th)) {
+    e.preventDefault();
+    window.DFTheme?.applyTheme(th.dataset.theme, true);
+    return;
+  }
+
+  const ac = e.target.closest('[data-accent]');
+  if (ac && root.contains(ac)) {
+    e.preventDefault();
+    window.DFTheme?.applyAccent(ac.dataset.accent, true);
+  }
+});
+</script>
 </body>
 </html>
