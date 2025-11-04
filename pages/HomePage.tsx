@@ -72,7 +72,7 @@ const HomePage: React.FC<HomePageProps> = ({ data }) => {
         <h2 className="text-3xl font-bold tracking-tight">My Official SM Channels</h2>
         <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-4">
           {socialLinks.map(link => (
-             <Button key={link.id} as="a" href={link.url} variant="filled-to-ghost">{link.name}</Button>
+             <Button key={link.id} as="a" href={link.url} target="_blank" rel="noopener noreferrer" variant="filled-to-ghost">{link.name}</Button>
           ))}
         </div>
         <div 
@@ -103,7 +103,7 @@ const HomePage: React.FC<HomePageProps> = ({ data }) => {
                 <p className="mt-2 text-sm">{venture.description}</p>
               </div>
               <div className="p-6 pt-0">
-                <Button as={NavLink} to={venture.url} variant="ghost">{venture.cta}</Button>
+                <Button as="a" href={venture.url} target="_blank" rel="noopener noreferrer" variant="ghost">{venture.cta}</Button>
               </div>
             </Card>
           ))}

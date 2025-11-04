@@ -1,14 +1,23 @@
 import React, { ReactNode } from 'react';
 
+// FIX: Updated props to be more flexible for polymorphic use.
+// It accepts all button attributes, plus 'as', 'href', 'to', 'target', 'rel'
+// to satisfy usage with `<a>` and `NavLink` and fix TS errors.
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode;
   variant?: 'filled' | 'tonal' | 'outlined' | 'ghost' | 'filled-to-ghost';
   icon?: string;
-  as?: 'button' | 'a';
+  as?: React.ElementType;
   href?: string;
+  to?: string;
+  target?: string;
+  rel?: string;
 }
 
-const Button: React.FC<ButtonProps> = ({ children, variant = 'filled', icon, as = 'button', href, ...props }) => {
+const Button: React.FC<ButtonProps> = ({ children, variant = 'filled', icon, as, href, ...props }) => {
+  // FIX: Implement polymorphic behavior to correctly render `button`, `a`, or custom components like `NavLink`.
+  const Component = as || (href ? 'a' : 'button');
+
   const baseClasses = 'inline-flex items-center justify-center gap-2 px-6 h-10 rounded-full font-semibold text-sm tracking-wide transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--md-sys-color-background)]';
   
   const variantClasses = {
@@ -28,18 +37,18 @@ const Button: React.FC<ButtonProps> = ({ children, variant = 'filled', icon, as 
     </>
   );
 
-  if (as === 'a') {
-    return (
-      <a href={href} className={className} {...(props as React.AnchorHTMLAttributes<HTMLAnchorElement>)}>
-        {content}
-      </a>
-    );
-  }
+  const allProps = {
+    ...props,
+    href,
+    className,
+  };
 
+  // The cast to `any` is a pragmatic way to handle the polymorphic nature
+  // without overly complex conditional types, given the mixed props.
   return (
-    <button className={className} {...(props as React.ButtonHTMLAttributes<HTMLButtonElement>)}>
+    <Component {...allProps as any}>
       {content}
-    </button>
+    </Component>
   );
 };
 
