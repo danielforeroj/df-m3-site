@@ -87,7 +87,7 @@ const ThemePicker: React.FC = () => {
               </span>
             </button>
             <div className="h-px w-full my-1" style={{backgroundColor: 'var(--md-sys-color-outline)'}}></div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col items-center gap-3">
               {themeOptions.map(option => (
                 <button
                   key={option.name}
