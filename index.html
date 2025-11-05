@@ -157,25 +157,36 @@
   }
   </script>
 
-  <!-- Live builds will inject a hashed /assets/index-*.js. If not present (AI Studio),
-       the fallback below will import a relative index.tsx (no leading slash). -->
-  <script id="df-module-fallback">
-    (function(){
-      const hasBuiltBundle = Array.from(document.querySelectorAll('script[type="module"]'))
-        .some(s => /\/assets\/index-.*\.js($|\?)/.test(s.src));
-      if (!hasBuiltBundle) {
-        const isPreview = location.hostname === 'aistudio.google.com'
-          || /\.scf\.usercontent\.goog$/.test(location.hostname)
-          || /\.googleusercontent\.com$/.test(location.hostname);
-        const src = isPreview ? 'index.tsx' : '/index.tsx';
-        const s = document.createElement('script');
-        s.type = 'module';
-        s.crossOrigin = '';
-        s.src = src;            // <— relative in preview; absolute on live dev
-        document.head.appendChild(s);
-      }
-    })();
-  </script>
+<!-- Loader: always use the built bundle in previews; no duplicate on live -->
+<script id="df-module-loader">
+  (function () {
+    // Your live host and current built file name:
+    const LIVE_HOST = 'danielforeroj.com';
+    const BUNDLE    = '/assets/index-CLyGj7VB.js'; // ← update only if your build hash changes
+
+    const onLive = location.hostname === LIVE_HOST;
+
+    // If the live HTML already includes the bundle tag, don't inject again.
+    const alreadyHasBundle = Array.from(document.scripts)
+      .some(s => (s.src || '').includes(BUNDLE));
+    if (onLive && alreadyHasBundle) return;
+
+    // In previews (AI Studio), make all relative URLs resolve against your domain
+    // so /assets/*.svg, fonts, etc. load from danielforeroj.com.
+    if (!onLive) {
+      const base = document.createElement('base');
+      base.href = 'https://' + LIVE_HOST + '/';
+      document.head.appendChild(base);
+    }
+
+    // Inject the built bundle. On live this is redundant-safe; on preview it’s required.
+    const s = document.createElement('script');
+    s.type = 'module';
+    s.crossOrigin = '';
+    s.src = (onLive ? '' : 'https://' + LIVE_HOST) + BUNDLE;
+    document.head.appendChild(s);
+  })();
+</script>
 </head>
 <body class="antialiased">
   <div id="root"></div>
