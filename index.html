@@ -1,110 +1,96 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- keep all local paths relative in preview environments -->
-  <base href="./">
-
   <script>
-    /* DF settings/theme bootstrap (CORS-aware) */
-    (function () {
-      const set = (k,v)=>localStorage.setItem(k,v);
-      const get = (k)=>localStorage.getItem(k);
+  /* DF settings/theme bootstrap (CORS-aware) */
+  (function () {
+    const set=(k,v)=>localStorage.setItem(k,v);
+    const get=(k)=>localStorage.getItem(k);
 
-      function applyAccent(hex, persist=false) {
-        if (hex) {
-          document.documentElement.style.setProperty('--accent', hex);
-          if (persist) set('df_accent', hex);
-        }
+    function applyAccent(hex, persist=false){
+      if(hex){
+        document.documentElement.style.setProperty('--accent',hex);
+        if(persist) set('df_accent',hex);
       }
+    }
+    function applyTheme(mode, persist=false){
+      const root=document.documentElement;
+      root.dataset.theme=mode;
+      root.classList.remove('light','dark');
+      if(mode==='light') root.classList.add('light');
+      if(mode==='dark')  root.classList.add('dark');
+      if(persist) set('df_theme',mode);
+    }
 
-      function applyTheme(mode, persist=false) {
-        const root = document.documentElement; // mode: system | light | dark
-        root.dataset.theme = mode;
-        root.classList.remove('light','dark');
-        if (mode === 'light') root.classList.add('light');
-        if (mode === 'dark')  root.classList.add('dark');
-        if (persist) set('df_theme', mode);
-      }
+    async function loadSettings(){
+      // Live = same-origin; Preview = cross-origin to canonical API
+      const isLive = location.hostname.includes('danielforeroj.com');
+      const API_BASE = isLive ? '' : 'https://danielforeroj.com';
+      const fetchOpts = isLive ? {credentials:'include'} : {mode:'cors', credentials:'omit'};
 
-      async function loadSettings() {
-        let API_BASE = '';
-        let fetchOpts = {};
-        const isLive = window.location.hostname.includes('danielforeroj.com');
+      try{
+        const r = await fetch(`${API_BASE}/api/settings/get.php`, fetchOpts);
+        if(!r.ok) throw new Error(`settings ${r.status}`);
+        const d = await r.json();
+        const s = d.settings || {};
+        window.__siteSettings = s;
 
-        if (isLive) {
-          // live: same-origin, no CORS
-          API_BASE = '';
-        } else {
-          // previews/dev: cross-origin to canonical domain
-          API_BASE = 'https://danielforeroj.com';
-          fetchOpts = { mode: 'cors', credentials: 'omit' };
+        // SEO defaults
+        if (s.seo?.site_title) document.title = s.seo.site_title;
+        if (s.seo?.site_description) {
+          let m = document.querySelector('meta[name="description"]');
+          if(!m){ m=document.createElement('meta'); m.name='description'; document.head.appendChild(m); }
+          m.setAttribute('content', s.seo.site_description);
         }
 
-        try {
-          const r = await fetch(`${API_BASE}/api/settings/get.php`, fetchOpts);
-          if (!r.ok) throw new Error(`Network response was not ok, status: ${r.status}`);
-          const d = await r.json();
-          const s = d.settings || {};
-          window.__siteSettings = s;
+        const adminTheme  = s.branding?.theme_default  || 'system';
+        const adminAccent = s.branding?.accent_default || '#3B82F6';
+        applyTheme(get('df_theme')   || adminTheme);
+        applyAccent(get('df_accent') || adminAccent);
 
-          // SEO
-          if (s.seo?.site_title) document.title = s.seo.site_title;
-          if (s.seo?.site_description) {
-            let m=document.querySelector('meta[name="description"]');
-            if(!m){ m=document.createElement('meta'); m.name='description'; document.head.appendChild(m); }
-            m.setAttribute('content', s.seo.site_description);
-          }
-
-          // Defaults from admin… (with visitor overrides)
-          const adminTheme  = s.branding?.theme_default  || 'system';
-          const adminAccent = s.branding?.accent_default || '#3B82F6';
-
-          applyTheme(get('df_theme')   || adminTheme);
-          applyAccent(get('df_accent') || adminAccent);
-
-          // Pixels
-          if (s.pixels?.gtm_id) {
-            (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});
-              var f=d.getElementsByTagName(s)[0], j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:''; j.async=true;
-              j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl; f.parentNode.insertBefore(j,f);
-            })(window,document,'script','dataLayer', s.pixels.gtm_id);
-          }
-          if (s.pixels?.ga4_id) {
-            const g=document.createElement('script'); g.async=true; g.src='https://www.googletagmanager.com/gtag/js?id='+s.pixels.ga4_id;
-            document.head.appendChild(g);
-            window.dataLayer=window.dataLayer||[]; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', s.pixels.ga4_id);
-          }
-          if (s.pixels?.meta_pixel_id) {
-            !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-              n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
-              n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
-              t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)
-            }(window, document,'script','https://connect.facebook.net/en_US/fbevents.js');
-            fbq('init', s.pixels.meta_pixel_id); fbq('track', 'PageView');
-          }
-          if (s.pixels?.custom_head_html) {
-            const div=document.createElement('div'); div.innerHTML=s.pixels.custom_head_html;
-            [...div.childNodes].forEach(n=>document.head.appendChild(n));
-          }
-
-          // Expose helpers for the floating palette
-          window.DFTheme = {
-            applyTheme, applyAccent,
-            resetToDefaults() {
-              localStorage.removeItem('df_theme');
-              localStorage.removeItem('df_accent');
-              applyTheme(adminTheme);
-              applyAccent(adminAccent);
-            },
-            palette: s.branding?.palette || []
-          };
-        } catch (e) {
-          console.error('settings bootstrap failed', e);
+        // Pixels
+        if (s.pixels?.gtm_id) {
+          (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});
+            var f=d.getElementsByTagName(s)[0], j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:''; j.async=true;
+            j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl; f.parentNode.insertBefore(j,f);
+          })(window,document,'script','dataLayer', s.pixels.gtm_id);
         }
-      }
+        if (s.pixels?.ga4_id) {
+          const g=document.createElement('script'); g.async=true;
+          g.src='https://www.googletagmanager.com/gtag/js?id='+s.pixels.ga4_id;
+          document.head.appendChild(g);
+          window.dataLayer=window.dataLayer||[]; function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date()); gtag('config', s.pixels.ga4_id);
+        }
+        if (s.pixels?.meta_pixel_id) {
+          !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+            n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+            n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+            t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)
+          }(window, document,'script','https://connect.facebook.net/en_US/fbevents.js');
+          fbq('init', s.pixels.meta_pixel_id); fbq('track', 'PageView');
+        }
+        if (s.pixels?.custom_head_html) {
+          const div=document.createElement('div'); div.innerHTML=s.pixels.custom_head_html;
+          [...div.childNodes].forEach(n=>document.head.appendChild(n));
+        }
 
-      loadSettings();
-    })();
+        // Expose helpers for the floating palette
+        window.DFTheme = {
+          applyTheme, applyAccent,
+          resetToDefaults(){
+            localStorage.removeItem('df_theme');
+            localStorage.removeItem('df_accent');
+            applyTheme(adminTheme); applyAccent(adminAccent);
+          },
+          palette: s.branding?.palette || []
+        };
+      } catch(e){
+        console.error('settings bootstrap failed', e);
+      }
+    }
+    loadSettings();
+  })();
   </script>
 
   <meta charset="UTF-8" />
@@ -112,16 +98,14 @@
   <title>Daniel Forero • Material 3 Web Portfolio</title>
   <meta name="description" content="I turn Web3 ideas into real-world businesses—and then make sure the world hears about them.">
 
-  <!-- Open Graph / Facebook -->
+  <!-- Open Graph -->
   <meta property="og:type" content="website">
-  <meta property="og:url" content="#">
   <meta property="og:title" content="Daniel Forero • Material 3 Web Portfolio">
   <meta property="og:description" content="I turn Web3 ideas into real-world businesses—and then make sure the world hears about them.">
   <meta property="og:image" content="https://picsum.photos/1200/630">
 
   <!-- Twitter -->
   <meta property="twitter:card" content="summary_large_image">
-  <meta property="twitter:url" content="#">
   <meta property="twitter:title" content="Daniel Forero • Material 3 Web Portfolio">
   <meta property="twitter:description" content="I turn Web3 ideas into real-world businesses—and then make sure the world hears about them.">
   <meta property="twitter:image" content="https://picsum.photos/1200/630">
@@ -130,121 +114,81 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"/>
 
   <style>
-    /* Material 3 Inspired Theme Tokens - FALLBACK ONLY */
-    :root {
-      /* Default Light Theme Colors */
-      --md-sys-color-primary: #005FAF;
-      --md-sys-color-on-primary: #FFFFFF;
-      --md-sys-color-primary-container: #D5E3FF;
-      --md-sys-color-on-primary-container: #001C3B;
-      --md-sys-color-secondary: #535f70;
-      --md-sys-color-on-secondary: #FFFFFF;
-      --md-sys-color-secondary-container: #D7E3F8;
-      --md-sys-color-on-secondary-container: #101C2B;
-      --md-sys-color-tertiary: #6B5778;
-      --md-sys-color-on-tertiary: #FFFFFF;
-      --md-sys-color-tertiary-container: #F3DAFF;
-      --md-sys-color-on-tertiary-container: #251431;
-
-      /* Base colors that are consistent across themes */
-      --md-sys-color-error: #BA1A1A;
-      --md-sys-color-on-error: #FFFFFF;
-      --md-sys-color-error-container: #FFDAD6;
-      --md-sys-color-on-error-container: #410002;
-      --md-sys-color-background: #F8F9FA;
-      --md-sys-color-on-background: #1A1C1E;
-      --md-sys-color-surface: #F8F9FA;
-      --md-sys-color-on-surface: #1A1C1E;
-      --md-sys-color-surface-variant: #E1E2E6;
-      --md-sys-color-on-surface-variant: #43474E;
-      --md-sys-color-outline: #74777F;
-      --md-sys-color-shadow: #000000;
-      --md-sys-color-inverse-surface: #2F3033;
-      --md-sys-color-inverse-on-surface: #F1F0F4;
-      --md-sys-color-inverse-primary: #BDC1C6;
-
-      font-family: 'Inter', sans-serif;
+    :root{
+      --md-sys-color-error:#BA1A1A; --md-sys-color-on-error:#FFF;
+      --md-sys-color-error-container:#FFDAD6; --md-sys-color-on-error-container:#410002;
+      --md-sys-color-background:#F8F9FA; --md-sys-color-on-background:#1A1C1E;
+      --md-sys-color-surface:#F8F9FA; --md-sys-color-on-surface:#1A1C1E;
+      --md-sys-color-surface-variant:#E1E2E6; --md-sys-color-on-surface-variant:#43474E;
+      --md-sys-color-outline:#74777F; --md-sys-color-shadow:#000;
+      --md-sys-color-inverse-surface:#2F3033; --md-sys-color-inverse-on-surface:#F1F0F4;
+      --md-sys-color-inverse-primary:#BDC1C6;
+      font-family:'Inter',sans-serif;
     }
-
-    .dark {
-      /* Default Dark Theme Colors */
-      --md-sys-color-primary: #A7C8FF;
-      --md-sys-color-on-primary: #003060;
-      --md-sys-color-primary-container: #004787;
-      --md-sys-color-on-primary-container: #D5E3FF;
-      --md-sys-color-secondary: #BBC7DB;
-      --md-sys-color-on-secondary: #253141;
-      --md-sys-color-secondary-container: #3C4858;
-      --md-sys-color-on-secondary-container: #D7E3F8;
-      --md-sys-color-tertiary: #D7BDE4;
-      --md-sys-color-on-tertiary: #3B2947;
-      --md-sys-color-tertiary-container: #52405F;
-      --md-sys-color-on-tertiary-container: #F3DAFF;
-
-      /* Base dark colors */
-      --md-sys-color-error: #FFB4AB;
-      --md-sys-color-on-error: #690005;
-      --md-sys-color-error-container: #93000A;
-      --md-sys-color-on-error-container: #FFDAD6;
-      --md-sys-color-background: #1A1C1E;
-      --md-sys-color-on-background: #E3E2E6;
-      --md-sys-color-surface: #1A1C1E;
-      --md-sys-color-on-surface: #E3E2E6;
-      --md-sys-color-surface-variant: #43474E;
-      --md-sys-color-on-surface-variant: #C4C6CF;
-      --md-sys-color-outline: #8E9199;
-      --md-sys-color-shadow: #000000;
-      --md-sys-color-inverse-surface: #E3E2E6;
-      --md-sys-color-inverse-on-surface: #1A1C1E;
-      --md-sys-color-inverse-primary: #5F6368;
+    .dark{
+      --md-sys-color-error:#FFB4AB; --md-sys-color-on-error:#690005;
+      --md-sys-color-error-container:#93000A; --md-sys-color-on-error-container:#FFDAD6;
+      --md-sys-color-background:#1A1C1E; --md-sys-color-on-background:#E3E2E6;
+      --md-sys-color-surface:#1A1C1E; --md-sys-color-on-surface:#E3E2E6;
+      --md-sys-color-surface-variant:#43474E; --md-sys-color-on-surface-variant:#C4C6CF;
+      --md-sys-color-outline:#8E9199; --md-sys-color-shadow:#000;
+      --md-sys-color-inverse-surface:#E3E2E6; --md-sys-color-inverse-on-surface:#1A1C1E;
+      --md-sys-color-inverse-primary:#5F6368;
     }
-    body { background-color: var(--md-sys-color-background); color: var(--md-sys-color-on-background); }
-    .material-symbols-outlined {
-      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-    }
-    @keyframes scroll { from { transform: translateX(0); } to { transform: translateX(-100%); } }
-    .animate-scroll { animation: scroll 60s linear infinite; }
+    body{ background:var(--md-sys-color-background); color:var(--md-sys-color-on-background); }
+    .material-symbols-outlined{ font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24 }
+    @keyframes scroll{ from{transform:translateX(0)} to{transform:translateX(-100%)} }
+    .animate-scroll{ animation:scroll 60s linear infinite; }
   </style>
 
+  <!-- Import map (keep one source of truth for libs) -->
   <script type="importmap">
   {
     "imports": {
       "react": "https://aistudiocdn.com/react@^19.2.0",
-      "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
       "react/": "https://aistudiocdn.com/react@^19.2.0/",
+      "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
       "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.9.5",
       "@google/genai": "https://aistudiocdn.com/@google/genai@^1.28.0"
     }
   }
   </script>
+
+  <!-- Live builds will inject a hashed /assets/index-*.js. If not present (AI Studio),
+       the fallback below will import a relative index.tsx (no leading slash). -->
+  <script id="df-module-fallback">
+    (function(){
+      const hasBuiltBundle = Array.from(document.querySelectorAll('script[type="module"]'))
+        .some(s => /\/assets\/index-.*\.js($|\?)/.test(s.src));
+      if (!hasBuiltBundle) {
+        const isPreview = location.hostname === 'aistudio.google.com'
+          || /\.scf\.usercontent\.goog$/.test(location.hostname)
+          || /\.googleusercontent\.com$/.test(location.hostname);
+        const src = isPreview ? 'index.tsx' : '/index.tsx';
+        const s = document.createElement('script');
+        s.type = 'module';
+        s.crossOrigin = '';
+        s.src = src;            // <— relative in preview; absolute on live dev
+        document.head.appendChild(s);
+      }
+    })();
+  </script>
 </head>
 <body class="antialiased">
   <div id="root"></div>
 
-  <!-- IMPORTANT: relative path so previews don't hit /index.tsx on their own origin -->
-  <script type="module" src="./index.tsx"></script>
-
   <script>
-  /* Hook clicks from your floating palette. */
+  /* Floating palette hooks */
   document.addEventListener('click', (e) => {
     const root = document.getElementById('theme-fab');
     if (!root) return;
-
     const th = e.target.closest('[data-theme]');
-    if (th && root.contains(th)) {
-      e.preventDefault();
-      window.DFTheme?.applyTheme(th.dataset.theme, true);
-      return;
-    }
-
+    if (th && root.contains(th)) { e.preventDefault(); window.DFTheme?.applyTheme(th.dataset.theme, true); return; }
     const ac = e.target.closest('[data-accent]');
-    if (ac && root.contains(ac)) {
-      e.preventDefault();
-      window.DFTheme?.applyAccent(ac.dataset.accent, true);
-    }
+    if (ac && root.contains(ac)) { e.preventDefault(); window.DFTheme?.applyAccent(ac.dataset.accent, true); }
   });
   </script>
 </body>
