@@ -13,6 +13,57 @@ interface AdminPageProps {
   setHomepageData: React.Dispatch<React.SetStateAction<HomePageData>>;
 }
 
+// --- Helper Components ---
+// FIX: Modified FormInput/FormTextarea to correctly handle `className` and added
+// `wrapperClassName` for better layout control. This resolves style
+// inconsistencies and the likely source of the prop-related rendering error.
+const FormInput = ({ label, wrapperClassName, ...props }: { label: string, wrapperClassName?: string, [key: string]: any }) => {
+    const { className, ...restProps } = props;
+    return (
+        <div className={wrapperClassName}>
+            <label className="block text-sm font-medium mb-1">{label}</label>
+            <input {...restProps} className={`w-full h-12 px-4 rounded-lg border focus:outline-none focus:ring-2 ${className || ''}`} style={{
+                backgroundColor: 'var(--md-sys-color-surface)',
+                borderColor: 'var(--md-sys-color-outline)',
+                color: 'var(--md-sys-color-on-surface)',
+                '--tw-ring-color': 'var(--md-sys-color-primary)'
+            } as React.CSSProperties} />
+        </div>
+    );
+};
+
+const FormTextarea = ({ label, wrapperClassName, ...props }: { label: string, wrapperClassName?: string, [key: string]: any }) => {
+    const { className, ...restProps } = props;
+    return (
+        <div className={wrapperClassName}>
+            <label className="block text-sm font-medium mb-1">{label}</label>
+            <textarea {...restProps} rows={4} className={`w-full p-4 rounded-lg border focus:outline-none focus:ring-2 ${className || ''}`} style={{
+                backgroundColor: 'var(--md-sys-color-surface)',
+                borderColor: 'var(--md-sys-color-outline)',
+                color: 'var(--md-sys-color-on-surface)',
+                '--tw-ring-color': 'var(--md-sys-color-primary)'
+            } as React.CSSProperties}></textarea>
+        </div>
+    );
+};
+
+const LoginScreen = ({ handleLogin }: { handleLogin: (e: React.FormEvent) => void }) => (
+  <div className="max-w-md mx-auto">
+      <Card className="p-8">
+          <h1 className="text-2xl font-bold text-center mb-2" style={{color: 'var(--md-sys-color-on-surface)'}}>Admin Login</h1>
+          <p className="text-center text-sm mb-6" style={{color: 'var(--md-sys-color-on-surface-variant)'}}>This is a UI demonstration.</p>
+          <form onSubmit={handleLogin} className="space-y-6">
+              <FormInput label="Username" type="text" id="username" defaultValue="admin" />
+              <FormInput label="Password" type="password" id="password" defaultValue="password" />
+              <Button type="submit" variant="ghost" className="w-full">
+                  Login
+              </Button>
+          </form>
+      </Card>
+  </div>
+);
+
+
 const AdminPage: React.FC<AdminPageProps> = ({ isLoggedIn, onLogin, onLogout, homepageData, setHomepageData }) => {
   
   // Local state for forms
@@ -115,48 +166,12 @@ const AdminPage: React.FC<AdminPageProps> = ({ isLoggedIn, onLogin, onLogout, ho
     e.preventDefault();
     onLogin();
   };
-  
-  const FormInput = ({ label, ...props }) => (
-    <div>
-        <label className="block text-sm font-medium mb-1">{label}</label>
-        <input {...props} className="w-full h-12 px-4 rounded-lg border focus:outline-none focus:ring-2" style={{
-            backgroundColor: 'var(--md-sys-color-surface)',
-            borderColor: 'var(--md-sys-color-outline)',
-            color: 'var(--md-sys-color-on-surface)',
-            '--tw-ring-color': 'var(--md-sys-color-primary)'
-        } as React.CSSProperties} />
-    </div>
-  );
-  
-  const FormTextarea = ({ label, ...props }) => (
-    <div>
-        <label className="block text-sm font-medium mb-1">{label}</label>
-        <textarea {...props} rows={4} className="w-full p-4 rounded-lg border focus:outline-none focus:ring-2" style={{
-            backgroundColor: 'var(--md-sys-color-surface)',
-            borderColor: 'var(--md-sys-color-outline)',
-            color: 'var(--md-sys-color-on-surface)',
-            '--tw-ring-color': 'var(--md-sys-color-primary)'
-        } as React.CSSProperties}></textarea>
-    </div>
-  );
 
-  const LoginScreen = () => (
-    <div className="max-w-md mx-auto">
-        <Card className="p-8">
-            <h1 className="text-2xl font-bold text-center mb-2" style={{color: 'var(--md-sys-color-on-surface)'}}>Admin Login</h1>
-            <p className="text-center text-sm mb-6" style={{color: 'var(--md-sys-color-on-surface-variant)'}}>This is a UI demonstration.</p>
-            <form onSubmit={handleLogin} className="space-y-6">
-                <FormInput label="Username" type="text" id="username" defaultValue="admin" />
-                <FormInput label="Password" type="password" id="password" defaultValue="password" />
-                <Button type="submit" variant="ghost" className="w-full">
-                    Login
-                </Button>
-            </form>
-        </Card>
-    </div>
-  );
+  if (!isLoggedIn) {
+    return <LoginScreen handleLogin={handleLogin} />;
+  }
 
-  const Dashboard = () => (
+  return (
     <div className="space-y-8">
       <div className="flex justify-between items-center">
         <h1 className="text-4xl font-extrabold tracking-tight" style={{color: 'var(--md-sys-color-primary)'}}>Dashboard</h1>
@@ -225,7 +240,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ isLoggedIn, onLogin, onLogout, ho
           ))}
         </div>
         <form onSubmit={handleAddRole} className="flex items-center gap-4">
-          <FormInput label="Add new role" type="text" value={newRole} onChange={(e) => setNewRole(e.target.value)} placeholder="Add a new role" className="flex-grow" />
+          <FormInput wrapperClassName="flex-grow" label="Add new role" type="text" value={newRole} onChange={(e) => setNewRole(e.target.value)} placeholder="Add a new role" />
           <Button type="submit" variant="ghost">Add Role</Button>
         </form>
       </Card>
@@ -242,8 +257,8 @@ const AdminPage: React.FC<AdminPageProps> = ({ isLoggedIn, onLogin, onLogout, ho
             ))}
           </div>
           <form onSubmit={handleAddSocialLink} className="flex items-end gap-4">
-              <div className="flex-grow"><FormInput label="Link Name" type="text" value={newSocialLink.name} onChange={e => setNewSocialLink({...newSocialLink, name: e.target.value})} /></div>
-              <div className="flex-grow"><FormInput label="URL" type="text" value={newSocialLink.url} onChange={e => setNewSocialLink({...newSocialLink, url: e.target.value})} /></div>
+              <FormInput wrapperClassName="flex-grow" label="Link Name" type="text" value={newSocialLink.name} onChange={e => setNewSocialLink({...newSocialLink, name: e.target.value})} />
+              <FormInput wrapperClassName="flex-grow" label="URL" type="text" value={newSocialLink.url} onChange={e => setNewSocialLink({...newSocialLink, url: e.target.value})} />
               <Button type="submit" variant="ghost">Add Link</Button>
           </form>
       </Card>
@@ -347,8 +362,6 @@ const AdminPage: React.FC<AdminPageProps> = ({ isLoggedIn, onLogin, onLogout, ho
       </Card>
     </div>
   );
-
-  return isLoggedIn ? <Dashboard /> : <LoginScreen />;
 };
 
 export default AdminPage;
