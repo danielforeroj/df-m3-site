@@ -1,360 +1,317 @@
-import React, { useState, ChangeEvent } from 'react';
+import React, { useState, ChangeEvent, useEffect } from 'react';
 import { posts } from '../data/mockData';
 import Button from '../components/Button';
 import Card from '../components/Card';
 import { NavLink } from 'react-router-dom';
-import { HomePageData, CompanyLogo, SocialLink, Venture, CtaButton } from '../types';
+import { fetchHome, saveHome, uploadFile, HomeContent, HomeButton, Venture, LogoItem } from '../lib/cms';
 
 interface AdminPageProps {
   isLoggedIn: boolean;
   onLogin: () => void;
   onLogout: () => void;
-  homepageData: HomePageData;
-  setHomepageData: React.Dispatch<React.SetStateAction<HomePageData>>;
 }
 
+const DEFAULT_HOME_CONTENT: HomeContent = {
+  hero_title: '',
+  hero_tags: [],
+  about: { title: '', body: '' },
+  operator: { title: '', body: '' },
+  socials: [],
+  hero_buttons: [],
+  ventures: [],
+  logos: [],
+};
+
 // --- Helper Components ---
-// FIX: Modified FormInput/FormTextarea to correctly handle `className` and added
-// `wrapperClassName` for better layout control. This resolves style
-// inconsistencies and the likely source of the prop-related rendering error.
-const FormInput = ({ label, wrapperClassName, ...props }: { label: string, wrapperClassName?: string, [key: string]: any }) => {
-    const { className, ...restProps } = props;
-    return (
-        <div className={wrapperClassName}>
-            <label className="block text-sm font-medium mb-1">{label}</label>
-            <input {...restProps} className={`w-full h-12 px-4 rounded-lg border focus:outline-none focus:ring-2 ${className || ''}`} style={{
-                backgroundColor: 'var(--md-sys-color-surface)',
-                borderColor: 'var(--md-sys-color-outline)',
-                color: 'var(--md-sys-color-on-surface)',
-                '--tw-ring-color': 'var(--md-sys-color-primary)'
-            } as React.CSSProperties} />
-        </div>
-    );
-};
+const FormInput = ({ label, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { label: string }) => (
+  <div>
+    <label htmlFor={props.id || props.name} className="block text-sm font-medium mb-1">{label}</label>
+    <input {...props} className={`w-full h-12 px-4 rounded-lg border focus:outline-none focus:ring-2 ${props.className || ''}`} style={{
+      backgroundColor: 'var(--md-sys-color-surface)',
+      borderColor: 'var(--md-sys-color-outline)',
+      color: 'var(--md-sys-color-on-surface)',
+      '--tw-ring-color': 'var(--md-sys-color-primary)'
+    } as React.CSSProperties} />
+  </div>
+);
 
-const FormTextarea = ({ label, wrapperClassName, ...props }: { label: string, wrapperClassName?: string, [key: string]: any }) => {
-    const { className, ...restProps } = props;
-    return (
-        <div className={wrapperClassName}>
-            <label className="block text-sm font-medium mb-1">{label}</label>
-            <textarea {...restProps} rows={4} className={`w-full p-4 rounded-lg border focus:outline-none focus:ring-2 ${className || ''}`} style={{
-                backgroundColor: 'var(--md-sys-color-surface)',
-                borderColor: 'var(--md-sys-color-outline)',
-                color: 'var(--md-sys-color-on-surface)',
-                '--tw-ring-color': 'var(--md-sys-color-primary)'
-            } as React.CSSProperties}></textarea>
-        </div>
-    );
-};
-
-const LoginScreen = ({ handleLogin }: { handleLogin: (e: React.FormEvent) => void }) => (
-  <div className="max-w-md mx-auto">
-      <Card className="p-8">
-          <h1 className="text-2xl font-bold text-center mb-2" style={{color: 'var(--md-sys-color-on-surface)'}}>Admin Login</h1>
-          <p className="text-center text-sm mb-6" style={{color: 'var(--md-sys-color-on-surface-variant)'}}>This is a UI demonstration.</p>
-          <form onSubmit={handleLogin} className="space-y-6">
-              <FormInput label="Username" type="text" id="username" defaultValue="admin" />
-              <FormInput label="Password" type="password" id="password" defaultValue="password" />
-              <Button type="submit" variant="ghost" className="w-full">
-                  Login
-              </Button>
-          </form>
-      </Card>
+const FormTextarea = ({ label, ...props }: React.TextareaHTMLAttributes<HTMLTextAreaElement> & { label: string }) => (
+  <div>
+    <label htmlFor={props.id || props.name} className="block text-sm font-medium mb-1">{label}</label>
+    <textarea {...props} rows={5} className={`w-full p-4 rounded-lg border focus:outline-none focus:ring-2 ${props.className || ''}`} style={{
+      backgroundColor: 'var(--md-sys-color-surface)',
+      borderColor: 'var(--md-sys-color-outline)',
+      color: 'var(--md-sys-color-on-surface)',
+      '--tw-ring-color': 'var(--md-sys-color-primary)'
+    } as React.CSSProperties}></textarea>
   </div>
 );
 
 
-const AdminPage: React.FC<AdminPageProps> = ({ isLoggedIn, onLogin, onLogout, homepageData, setHomepageData }) => {
-  
-  // Local state for forms
-  const [aboutCard1, setAboutCard1] = useState(homepageData.aboutCard1);
-  const [aboutCard2, setAboutCard2] = useState(homepageData.aboutCard2);
-  const [profileRoles, setProfileRoles] = useState(homepageData.profileRoles);
-  const [newRole, setNewRole] = useState('');
-  const [socialLinks, setSocialLinks] = useState(homepageData.socialLinks);
-  const [newSocialLink, setNewSocialLink] = useState({ name: '', url: ''});
-  const [ventures, setVentures] = useState(homepageData.ventures);
-  const [editingVenture, setEditingVenture] = useState<Venture | null>(null);
-  const [heroButton1, setHeroButton1] = useState(homepageData.heroButton1);
-  const [heroButton2, setHeroButton2] = useState(homepageData.heroButton2);
+const LoginScreen = ({ handleLogin }: { handleLogin: (e: React.FormEvent) => void }) => (
+  <div className="max-w-md mx-auto">
+    <Card className="p-8">
+      <h1 className="text-2xl font-bold text-center mb-2" style={{ color: 'var(--md-sys-color-on-surface)' }}>Admin Login</h1>
+      <p className="text-center text-sm mb-6" style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>This is a UI demonstration.</p>
+      <form onSubmit={handleLogin} className="space-y-6">
+        <FormInput label="Username" type="text" id="username" defaultValue="admin" />
+        <FormInput label="Password" type="password" id="password" defaultValue="password" />
+        <Button type="submit" variant="ghost" className="w-full">
+          Login
+        </Button>
+      </form>
+    </Card>
+  </div>
+);
 
 
-  // --- Handlers for updating global state ---
-  const handleUpdateHomepageData = <T extends keyof HomePageData>(field: T, value: HomePageData[T]) => {
-    setHomepageData(prev => ({ ...prev, [field]: value }));
-  };
-  
-  // --- Logo Handlers ---
-  const handleLogoUpload = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && file.type === 'image/png') {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const newLogo: CompanyLogo = {
-          name: file.name.replace('.png', ''),
-          logo: reader.result as string,
-        };
-        handleUpdateHomepageData('logos', [...homepageData.logos, newLogo]);
-      };
-      reader.readAsDataURL(file);
+const AdminPage: React.FC<AdminPageProps> = ({ isLoggedIn, onLogin, onLogout }) => {
+  const [content, setContent] = useState<HomeContent | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'success' | 'error' | null>(null);
+  const [uploadStates, setUploadStates] = useState<Record<number, boolean>>({});
+
+  useEffect(() => {
+    const loadContent = async () => {
+      setIsLoading(true);
+      const cmsData = await fetchHome();
+      setContent(cmsData || DEFAULT_HOME_CONTENT);
+      setIsLoading(false);
+    };
+    if (isLoggedIn) {
+        loadContent();
     } else {
-      alert('Please upload a valid PNG file.');
+        setIsLoading(false);
+    }
+  }, [isLoggedIn]);
+
+  const handleGenericChange = (path: string, value: any) => {
+    if (!content) return;
+    const keys = path.split('.');
+    setContent(prev => {
+      const newState = JSON.parse(JSON.stringify(prev)); // Deep copy
+      let current = newState;
+      for (let i = 0; i < keys.length - 1; i++) {
+        current = current[keys[i]];
+      }
+      current[keys[keys.length - 1]] = value;
+      return newState;
+    });
+  };
+
+  const handleListChange = <T,>(listName: keyof HomeContent, index: number, field: keyof T, value: any) => {
+    if (!content) return;
+    const list = (content[listName] as T[] | undefined) || [];
+    const updatedList = [...list];
+    updatedList[index] = { ...updatedList[index], [field]: value };
+    setContent(prev => ({ ...prev!, [listName]: updatedList }));
+  };
+  
+  // FIX: Converted `addListItem` to a generic function to ensure type safety when adding
+  // new items to arrays in the state. This prevents type mismatches during state updates.
+  const addListItem = <T,>(listName: keyof HomeContent, newItem: T) => {
+    if (!content) return;
+    setContent(prev => {
+        if (!prev) return null;
+        const list = (prev[listName] as T[] | undefined) || [];
+        return { ...prev, [listName]: [...list, newItem] };
+    });
+  };
+
+  const removeListItem = (listName: keyof HomeContent, index: number) => {
+     if (!content) return;
+    const list = (content[listName] as any[] | undefined) || [];
+    setContent(prev => ({ ...prev!, [listName]: list.filter((_, i) => i !== index) }));
+  };
+
+  const handleLogoUpload = async (index: number, file: File) => {
+    if (!file) return;
+    setUploadStates(prev => ({ ...prev, [index]: true }));
+    try {
+      const { url } = await uploadFile(file);
+      handleListChange<LogoItem>('logos', index, 'logoUrl', url);
+    } catch (error) {
+      console.error("Upload failed:", error);
+      alert("Logo upload failed. Please try again.");
+    } finally {
+      setUploadStates(prev => ({ ...prev, [index]: false }));
     }
   };
 
-  const handleRemoveLogo = (logoNameToRemove: string) => {
-    const updatedLogos = homepageData.logos.filter(logo => logo.name !== logoNameToRemove);
-    handleUpdateHomepageData('logos', updatedLogos);
-  };
-  
-  // --- Role Handlers ---
-  const handleAddRole = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newRole.trim() && !profileRoles.includes(newRole.trim())) {
-      const updatedRoles = [...profileRoles, newRole.trim()];
-      setProfileRoles(updatedRoles);
-      handleUpdateHomepageData('profileRoles', updatedRoles);
-      setNewRole('');
+  const handleSaveAll = async () => {
+    if (!content) return;
+    setIsSaving(true);
+    setSaveStatus(null);
+    try {
+      await saveHome(content);
+      setSaveStatus('success');
+    } catch (error) {
+      console.error("Failed to save:", error);
+      setSaveStatus('error');
+    } finally {
+      setIsSaving(false);
+      setTimeout(() => setSaveStatus(null), 3000);
     }
   };
 
-  const handleRemoveRole = (roleToRemove: string) => {
-    const updatedRoles = profileRoles.filter(role => role !== roleToRemove);
-    setProfileRoles(updatedRoles);
-    handleUpdateHomepageData('profileRoles', updatedRoles);
-  };
-  
-  // --- Social Link Handlers ---
-    const handleAddSocialLink = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (newSocialLink.name.trim() && newSocialLink.url.trim()) {
-            const newLink: SocialLink = { ...newSocialLink, id: Date.now().toString() };
-            const updatedLinks = [...socialLinks, newLink];
-            setSocialLinks(updatedLinks);
-            handleUpdateHomepageData('socialLinks', updatedLinks);
-            setNewSocialLink({ name: '', url: '' });
-        }
-    };
-
-    const handleRemoveSocialLink = (id: string) => {
-        const updatedLinks = socialLinks.filter(link => link.id !== id);
-        setSocialLinks(updatedLinks);
-        handleUpdateHomepageData('socialLinks', updatedLinks);
-    };
-
-  // --- Venture Handlers ---
-    const handleSaveVenture = (ventureToSave: Venture) => {
-        let updatedVentures;
-        if (ventures.find(v => v.id === ventureToSave.id)) {
-            updatedVentures = ventures.map(v => v.id === ventureToSave.id ? ventureToSave : v);
-        } else {
-            updatedVentures = [...ventures, ventureToSave];
-        }
-        setVentures(updatedVentures);
-        handleUpdateHomepageData('ventures', updatedVentures);
-        setEditingVenture(null);
-    };
-
-    const handleRemoveVenture = (id: string) => {
-        const updatedVentures = ventures.filter(v => v.id !== id);
-        setVentures(updatedVentures);
-        handleUpdateHomepageData('ventures', updatedVentures);
-    };
-
-  // --- Mock Login ---
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     onLogin();
   };
 
+  if (isLoading) {
+    return <div className="text-center">Loading Admin Panel...</div>;
+  }
+
   if (!isLoggedIn) {
     return <LoginScreen handleLogin={handleLogin} />;
+  }
+  
+  if (!content) {
+    return <div className="text-center text-red-500">Failed to load content. Please refresh.</div>
   }
 
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center">
-        <h1 className="text-4xl font-extrabold tracking-tight" style={{color: 'var(--md-sys-color-primary)'}}>Dashboard</h1>
-        <Button onClick={onLogout} variant="filled-to-ghost">Logout</Button>
+        <h1 className="text-4xl font-extrabold tracking-tight" style={{ color: 'var(--md-sys-color-primary)' }}>Dashboard</h1>
+        <div className="flex items-center gap-4">
+          <Button onClick={handleSaveAll} variant="filled" disabled={isSaving}>
+            {isSaving ? 'Saving...' : 'Save Changes'}
+          </Button>
+          <Button onClick={onLogout} variant="filled-to-ghost">Logout</Button>
+        </div>
       </div>
-       <p className="text-sm rounded-lg p-3 inline-flex gap-2" style={{backgroundColor: 'var(--md-sys-color-tertiary-container)', color: 'var(--md-sys-color-on-tertiary-container)'}}>
-            <span className="material-symbols-outlined">info</span>
-            Changes are not saved in this demo and will reset on page reload.
-       </p>
+      
+      {saveStatus === 'success' && <div className="p-4 rounded-lg" style={{ backgroundColor: 'var(--md-sys-color-primary-container)', color: 'var(--md-sys-color-on-primary-container)' }}>✅ Content saved successfully!</div>}
+      {saveStatus === 'error' && <div className="p-4 rounded-lg" style={{ backgroundColor: 'var(--md-sys-color-error-container)', color: 'var(--md-sys-color-on-error-container)' }}>❌ There was an error saving. Please try again.</div>}
 
-      {/* --- Section: Logo Slider --- */}
-      <Card className="p-6">
-        <h2 className="text-2xl font-bold mb-4" style={{color: 'var(--md-sys-color-on-surface)'}}>Manage Logos</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-4 mb-4">
-          {homepageData.logos.map(logo => (
-            <div key={logo.name} className="relative group p-2 border rounded-lg flex items-center justify-center" style={{borderColor: 'var(--md-sys-color-outline)'}}>
-              <img src={logo.logo} alt={logo.name} className="h-8 grayscale" />
-              <button 
-                onClick={() => handleRemoveLogo(logo.name)} 
-                className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                aria-label={`Remove ${logo.name} logo`}
-                style={{backgroundColor: 'var(--md-sys-color-error)', color: 'var(--md-sys-color-on-error)'}}
-              >
-                 <span className="material-symbols-outlined text-base">close</span>
-              </button>
-            </div>
-          ))}
-        </div>
-        <div>
-            <label htmlFor="logo-upload" className="block text-sm font-medium mb-1">Upload New Logo (PNG only)</label>
-            <input type="file" id="logo-upload" accept="image/png" onChange={handleLogoUpload} 
-            className="block w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold" />
-        </div>
+      {/* --- Section: Hero --- */}
+      <Card className="p-6 space-y-4">
+        <h2 className="text-2xl font-bold" style={{ color: 'var(--md-sys-color-on-surface)' }}>Hero Section</h2>
+        <FormInput label="Hero Title" type="text" value={content.hero_title} onChange={e => handleGenericChange('hero_title', e.target.value)} />
+        <FormInput label="Profile Roles (comma-separated)" type="text" value={(content.hero_tags || []).join(', ')} onChange={e => handleGenericChange('hero_tags', e.target.value.split(',').map(t => t.trim()))} />
       </Card>
       
       {/* --- Section: About Cards --- */}
       <div className="grid md:grid-cols-2 gap-6">
-          <Card className="p-6">
-            <h2 className="text-2xl font-bold mb-4" style={{color: 'var(--md-sys-color-on-surface)'}}>{aboutCard1.title}</h2>
-            <form className="space-y-4" onSubmit={e => {e.preventDefault(); handleUpdateHomepageData('aboutCard1', aboutCard1)}}>
-              <FormInput label="Title" type="text" value={aboutCard1.title} onChange={e => setAboutCard1({...aboutCard1, title: e.target.value})} />
-              <FormTextarea label="Subtitle" value={aboutCard1.subtitle} onChange={e => setAboutCard1({...aboutCard1, subtitle: e.target.value})} />
-              <FormTextarea label="Text" value={aboutCard1.text} onChange={e => setAboutCard1({...aboutCard1, text: e.target.value})} />
-              <Button type="submit" variant="ghost">Save Card 1</Button>
-            </form>
-          </Card>
-          <Card className="p-6">
-            <h2 className="text-2xl font-bold mb-4" style={{color: 'var(--md-sys-color-on-surface)'}}>{aboutCard2.title}</h2>
-            <form className="space-y-4" onSubmit={e => {e.preventDefault(); handleUpdateHomepageData('aboutCard2', aboutCard2)}}>
-              <FormInput label="Title" type="text" value={aboutCard2.title} onChange={e => setAboutCard2({...aboutCard2, title: e.target.value})} />
-              <FormTextarea label="Text" value={aboutCard2.subtitle} onChange={e => setAboutCard2({...aboutCard2, subtitle: e.target.value})} />
-              <Button type="submit" variant="ghost">Save Card 2</Button>
-            </form>
-          </Card>
+        <Card className="p-6 space-y-4">
+          <h2 className="text-2xl font-bold" style={{ color: 'var(--md-sys-color-on-surface)' }}>About Card 1</h2>
+          <FormInput label="Title" value={content.about.title} onChange={e => handleGenericChange('about.title', e.target.value)} />
+          <FormTextarea label="Body" value={content.about.body} onChange={e => handleGenericChange('about.body', e.target.value)} />
+        </Card>
+        <Card className="p-6 space-y-4">
+          <h2 className="text-2xl font-bold" style={{ color: 'var(--md-sys-color-on-surface)' }}>About Card 2</h2>
+          <FormInput label="Title" value={content.operator.title} onChange={e => handleGenericChange('operator.title', e.target.value)} />
+          <FormTextarea label="Body" value={content.operator.body} onChange={e => handleGenericChange('operator.body', e.target.value)} />
+        </Card>
       </div>
       
-      {/* --- Section: Profile Roles --- */}
-      <Card className="p-6">
-        <h2 className="text-2xl font-bold mb-4" style={{color: 'var(--md-sys-color-on-surface)'}}>Edit Profile Roles</h2>
-        <div className="flex flex-wrap gap-2 mb-4">
-          {profileRoles.map(role => (
-            <div key={role} className="flex items-center rounded-lg" style={{ backgroundColor: 'var(--md-sys-color-secondary-container)', color: 'var(--md-sys-color-on-secondary-container)' }}>
-              <span className="pl-3 pr-2 py-1.5 text-sm font-medium">{role}</span>
-              <button onClick={() => handleRemoveRole(role)} className="mr-1 p-1 rounded-full hover:bg-black/10 active:bg-black/20 focus:outline-none"><span className="material-symbols-outlined text-base align-middle">close</span></button>
+      {/* --- Section: Social Links --- */}
+      <Card className="p-6 space-y-4">
+          <h2 className="text-2xl font-bold" style={{color: 'var(--md-sys-color-on-surface)'}}>Social Links</h2>
+          {(content.socials || []).map((item, index) => (
+            <div key={index} className="flex items-end gap-4 p-3 rounded-lg" style={{backgroundColor: 'var(--md-sys-color-surface)'}}>
+              <div className="flex-grow">
+                  <FormInput label="Name" type="text" value={item.name} onChange={e => handleListChange('socials', index, 'name', e.target.value)} />
+              </div>
+              <div className="flex-grow">
+                  <FormInput label="URL" type="text" value={item.url} onChange={e => handleListChange('socials', index, 'url', e.target.value)} />
+              </div>
+              <Button variant="ghost" onClick={() => removeListItem('socials', index)} aria-label="Remove item">
+                <span className="material-symbols-outlined">delete</span>
+              </Button>
             </div>
           ))}
-        </div>
-        <form onSubmit={handleAddRole} className="flex items-center gap-4">
-          <FormInput wrapperClassName="flex-grow" label="Add new role" type="text" value={newRole} onChange={(e) => setNewRole(e.target.value)} placeholder="Add a new role" />
-          <Button type="submit" variant="ghost">Add Role</Button>
-        </form>
-      </Card>
-      
-      {/* --- Section: Social Links --- */}
-      <Card className="p-6">
-          <h2 className="text-2xl font-bold mb-4" style={{color: 'var(--md-sys-color-on-surface)'}}>Manage Social Links</h2>
-          <div className="space-y-2 mb-4">
-            {socialLinks.map(link => (
-                <div key={link.id} className="flex items-center justify-between p-2 rounded-lg" style={{backgroundColor: 'var(--md-sys-color-surface)'}}>
-                    <span>{link.name} - <em className="text-sm">{link.url}</em></span>
-                    <button onClick={() => handleRemoveSocialLink(link.id)} className="p-1 text-red-500 rounded-full hover:bg-black/10"><span className="material-symbols-outlined text-base">delete</span></button>
-                </div>
-            ))}
-          </div>
-          <form onSubmit={handleAddSocialLink} className="flex items-end gap-4">
-              <FormInput wrapperClassName="flex-grow" label="Link Name" type="text" value={newSocialLink.name} onChange={e => setNewSocialLink({...newSocialLink, name: e.target.value})} />
-              <FormInput wrapperClassName="flex-grow" label="URL" type="text" value={newSocialLink.url} onChange={e => setNewSocialLink({...newSocialLink, url: e.target.value})} />
-              <Button type="submit" variant="ghost">Add Link</Button>
-          </form>
+          <Button variant="outlined" onClick={() => addListItem('socials', { name: '', url: '' })}>Add Social Link</Button>
       </Card>
 
-      {/* --- Section: Hero CTA Buttons --- */}
-      <Card className="p-6">
-        <h2 className="text-2xl font-bold mb-4" style={{color: 'var(--md-sys-color-on-surface)'}}>Manage Hero Buttons</h2>
-        <div className="grid md:grid-cols-2 gap-6">
-          <form className="p-4 border rounded-lg space-y-4" style={{borderColor: 'var(--md-sys-color-outline)'}} onSubmit={(e) => { e.preventDefault(); handleUpdateHomepageData('heroButton1', heroButton1); }}>
-            <h3 className="font-bold">Primary Button</h3>
-            <FormInput label="Text" value={heroButton1.text} onChange={(e: ChangeEvent<HTMLInputElement>) => setHeroButton1({...heroButton1, text: e.target.value})} />
-            <FormInput label="URL" value={heroButton1.url} onChange={(e: ChangeEvent<HTMLInputElement>) => setHeroButton1({...heroButton1, url: e.target.value})} />
-            <FormInput label="Icon Name (Optional)" value={heroButton1.icon || ''} onChange={(e: ChangeEvent<HTMLInputElement>) => setHeroButton1({...heroButton1, icon: e.target.value})} />
-            <div>
-              <label className="block text-sm font-medium mb-1">Variant</label>
-              <select value={heroButton1.variant} onChange={(e: ChangeEvent<HTMLSelectElement>) => setHeroButton1({...heroButton1, variant: e.target.value as CtaButton['variant']})} className="w-full h-12 px-4 rounded-lg border focus:outline-none focus:ring-2" style={{ backgroundColor: 'var(--md-sys-color-surface)', borderColor: 'var(--md-sys-color-outline)', color: 'var(--md-sys-color-on-surface)', '--tw-ring-color': 'var(--md-sys-color-primary)'} as React.CSSProperties}>
-                <option value="filled">Filled</option><option value="tonal">Tonal</option><option value="outlined">Outlined</option><option value="ghost">Ghost</option><option value="filled-to-ghost">Filled to Ghost</option>
-              </select>
+      {/* --- Section: Hero Buttons --- */}
+      <Card className="p-6 space-y-4">
+          <h2 className="text-2xl font-bold" style={{color: 'var(--md-sys-color-on-surface)'}}>Hero Buttons</h2>
+          {(content.hero_buttons || []).map((item, index) => (
+            <div key={index} className="flex items-end gap-4 p-3 rounded-lg" style={{backgroundColor: 'var(--md-sys-color-surface)'}}>
+                <div className="flex-grow">
+                  <FormInput label="Label" type="text" value={item.label} onChange={e => handleListChange<HomeButton>('hero_buttons', index, 'label', e.target.value)} />
+                </div>
+                <div className="flex-grow">
+                  <FormInput label="URL" type="text" value={item.url} onChange={e => handleListChange<HomeButton>('hero_buttons', index, 'url', e.target.value)} />
+                </div>
+              <Button variant="ghost" onClick={() => removeListItem('hero_buttons', index)} aria-label="Remove item">
+                <span className="material-symbols-outlined">delete</span>
+              </Button>
             </div>
-            <div className="flex items-center gap-2 pt-2">
-              <input type="checkbox" id="btn1-enabled" checked={heroButton1.enabled} onChange={(e: ChangeEvent<HTMLInputElement>) => setHeroButton1({...heroButton1, enabled: e.target.checked})} className="h-5 w-5 rounded focus:ring-2" style={{'--tw-ring-color': 'var(--md-sys-color-primary)'} as React.CSSProperties} />
-              <label htmlFor="btn1-enabled" className="text-sm font-medium">Enabled</label>
-            </div>
-            <Button type="submit" variant="ghost">Save Primary Button</Button>
-          </form>
-          <form className="p-4 border rounded-lg space-y-4" style={{borderColor: 'var(--md-sys-color-outline)'}} onSubmit={(e) => { e.preventDefault(); handleUpdateHomepageData('heroButton2', heroButton2); }}>
-            <h3 className="font-bold">Secondary Button</h3>
-            <FormInput label="Text" value={heroButton2.text} onChange={(e: ChangeEvent<HTMLInputElement>) => setHeroButton2({...heroButton2, text: e.target.value})} />
-            <FormInput label="URL" value={heroButton2.url} onChange={(e: ChangeEvent<HTMLInputElement>) => setHeroButton2({...heroButton2, url: e.target.value})} />
-            <FormInput label="Icon Name (Optional)" value={heroButton2.icon || ''} onChange={(e: ChangeEvent<HTMLInputElement>) => setHeroButton2({...heroButton2, icon: e.target.value})} />
-            <div>
-              <label className="block text-sm font-medium mb-1">Variant</label>
-              <select value={heroButton2.variant} onChange={(e: ChangeEvent<HTMLSelectElement>) => setHeroButton2({...heroButton2, variant: e.target.value as CtaButton['variant']})} className="w-full h-12 px-4 rounded-lg border focus:outline-none focus:ring-2" style={{ backgroundColor: 'var(--md-sys-color-surface)', borderColor: 'var(--md-sys-color-outline)', color: 'var(--md-sys-color-on-surface)', '--tw-ring-color': 'var(--md-sys-color-primary)'} as React.CSSProperties}>
-                <option value="filled">Filled</option><option value="tonal">Tonal</option><option value="outlined">Outlined</option><option value="ghost">Ghost</option><option value="filled-to-ghost">Filled to Ghost</option>
-              </select>
-            </div>
-            <div className="flex items-center gap-2 pt-2">
-              <input type="checkbox" id="btn2-enabled" checked={heroButton2.enabled} onChange={(e: ChangeEvent<HTMLInputElement>) => setHeroButton2({...heroButton2, enabled: e.target.checked})} className="h-5 w-5 rounded focus:ring-2" style={{'--tw-ring-color': 'var(--md-sys-color-primary)'} as React.CSSProperties} />
-              <label htmlFor="btn2-enabled" className="text-sm font-medium">Enabled</label>
-            </div>
-            <Button type="submit" variant="ghost">Save Secondary Button</Button>
-          </form>
-        </div>
+          ))}
+          <Button variant="outlined" onClick={() => addListItem<HomeButton>('hero_buttons', { label: '', url: '' })}>Add Hero Button</Button>
       </Card>
 
       {/* --- Section: Ventures --- */}
-      <Card className="p-6">
-        <h2 className="text-2xl font-bold mb-4" style={{color: 'var(--md-sys-color-on-surface)'}}>Manage Ventures</h2>
-        <div className="space-y-4">
-            {ventures.map(v => (
-                <div key={v.id} className="p-4 rounded-lg flex justify-between items-center" style={{backgroundColor: 'var(--md-sys-color-surface)'}}>
-                    <div>
-                        <p className="font-bold">{v.title}</p>
-                        <p className="text-sm text-gray-500">{v.cta}</p>
-                    </div>
-                    <div className="flex gap-2">
-                        <Button variant="ghost" onClick={() => setEditingVenture(v)}>Edit</Button>
-                        <Button variant="ghost" onClick={() => handleRemoveVenture(v.id)}>Delete</Button>
-                    </div>
-                </div>
-            ))}
-             <Button variant="outlined" onClick={() => setEditingVenture({id: Date.now().toString(), title: '', description: '', cta: '', url: '#'})}>Add New Venture</Button>
-        </div>
+      <Card className="p-6 space-y-4">
+        <h2 className="text-2xl font-bold" style={{color: 'var(--md-sys-color-on-surface)'}}>Manage Ventures</h2>
+        {(content.ventures || []).map((item, index) => (
+          <div key={index} className="p-4 space-y-3 rounded-lg border" style={{borderColor: 'var(--md-sys-color-outline)'}}>
+            <div className="flex justify-between items-center">
+                <h3 className="font-semibold text-lg">Venture #{index + 1}</h3>
+                <Button variant="ghost" onClick={() => removeListItem('ventures', index)} aria-label="Remove venture">
+                    <span className="material-symbols-outlined">delete</span>
+                </Button>
+            </div>
+            <div className="grid md:grid-cols-2 gap-4">
+                <FormInput label="Title" value={item.title} onChange={e => handleListChange<Venture>('ventures', index, 'title', e.target.value)} />
+                <FormInput label="Subtitle" value={item.subtitle || ''} onChange={e => handleListChange<Venture>('ventures', index, 'subtitle', e.target.value)} />
+            </div>
+            <FormTextarea label="Body" value={item.body || ''} onChange={e => handleListChange<Venture>('ventures', index, 'body', e.target.value)} />
+            <div className="grid md:grid-cols-2 gap-4">
+                <FormInput label="CTA Label" value={item.ctaLabel || ''} onChange={e => handleListChange<Venture>('ventures', index, 'ctaLabel', e.target.value)} />
+                <FormInput label="CTA URL" value={item.ctaUrl || ''} onChange={e => handleListChange<Venture>('ventures', index, 'ctaUrl', e.target.value)} />
+            </div>
+          </div>
+        ))}
+        {/* FIX: Corrected the call to the now generic `addListItem` function by providing the <Venture> type. */}
+        <Button variant="outlined" onClick={() => addListItem<Venture>('ventures', { title: '', subtitle: '', body: '', ctaLabel: '', ctaUrl: '' })}>Add Venture</Button>
       </Card>
       
-      {editingVenture && (
-         <Card className="p-6 mt-6">
-             <h3 className="text-xl font-bold mb-4">{editingVenture.title ? "Edit Venture" : "Add New Venture"}</h3>
-             <form className="space-y-4" onSubmit={e => {e.preventDefault(); handleSaveVenture(editingVenture)}}>
-                <FormInput label="Title" value={editingVenture.title} onChange={e => setEditingVenture({...editingVenture, title: e.target.value})} />
-                <FormTextarea label="Description" value={editingVenture.description} onChange={e => setEditingVenture({...editingVenture, description: e.target.value})} />
-                <FormInput label="CTA Text" value={editingVenture.cta} onChange={e => setEditingVenture({...editingVenture, cta: e.target.value})} />
-                <FormInput label="URL" value={editingVenture.url} onChange={e => setEditingVenture({...editingVenture, url: e.target.value})} />
-                <div className="flex gap-4">
-                    <Button type="submit" variant="ghost">Save Venture</Button>
-                    <Button variant="outlined" onClick={() => setEditingVenture(null)}>Cancel</Button>
+      {/* --- Section: Logos --- */}
+      <Card className="p-6 space-y-4">
+          <h2 className="text-2xl font-bold" style={{color: 'var(--md-sys-color-on-surface)'}}>Manage Logos</h2>
+           {(content.logos || []).map((item, index) => (
+                <div key={index} className="flex items-center gap-4 p-3 rounded-lg border" style={{borderColor: 'var(--md-sys-color-outline)'}}>
+                    <div className="w-24 h-16 flex items-center justify-center rounded-lg" style={{backgroundColor: 'var(--md-sys-color-surface)'}}>
+                        {item.logoUrl ? <img src={item.logoUrl} alt={item.name || `Logo ${index+1}`} className="max-h-12 max-w-full" /> : <span className="text-xs text-center">No Image</span>}
+                    </div>
+                    <div className="flex-grow space-y-3">
+                         <FormInput label="Name (optional)" value={item.name || ''} onChange={e => handleListChange<LogoItem>('logos', index, 'name', e.target.value)} />
+                         <FormInput label="URL (optional)" value={item.url || ''} onChange={e => handleListChange<LogoItem>('logos', index, 'url', e.target.value)} />
+                    </div>
+                    <div className="flex flex-col gap-2 items-center">
+                        <Button as="label" variant="tonal" className="relative cursor-pointer">
+                            {uploadStates[index] ? 'Uploading...' : 'Upload'}
+                            <input type="file" accept="image/*" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" disabled={uploadStates[index]} onChange={e => e.target.files && handleLogoUpload(index, e.target.files[0])} />
+                        </Button>
+                        <Button variant="ghost" onClick={() => removeListItem('logos', index)}><span className="material-symbols-outlined">delete</span></Button>
+                    </div>
                 </div>
-             </form>
-         </Card>
-      )}
+           ))}
+           {/* FIX: Corrected the call to the now generic `addListItem` function by providing the <LogoItem> type. */}
+           <Button variant="outlined" onClick={() => addListItem<LogoItem>('logos', { logoUrl: '', name: '', url: '' })}>Add Logo</Button>
+      </Card>
 
       {/* --- Section: Manage Posts --- */}
       <Card className="p-6">
-        <h2 className="text-2xl font-bold mb-4" style={{color: 'var(--md-sys-color-on-surface)'}}>Manage Content Posts</h2>
+        <h2 className="text-2xl font-bold mb-4" style={{ color: 'var(--md-sys-color-on-surface)' }}>Manage Content Posts</h2>
         <div className="space-y-4">
           {posts.map(post => (
-            <div key={post.slug} className="p-4 rounded-lg flex flex-col sm:flex-row justify-between items-center gap-4" style={{backgroundColor: 'var(--md-sys-color-surface)'}}>
+            <div key={post.slug} className="p-4 rounded-lg flex flex-col sm:flex-row justify-between items-center gap-4" style={{ backgroundColor: 'var(--md-sys-color-surface)' }}>
               <div className="text-center sm:text-left">
-                <p className="font-bold text-lg" style={{color: 'var(--md-sys-color-on-surface)'}}>{post.title}</p>
-                <p className="text-sm" style={{color: 'var(--md-sys-color-on-surface-variant)'}}>
+                <p className="font-bold text-lg" style={{ color: 'var(--md-sys-color-on-surface)' }}>{post.title}</p>
+                <p className="text-sm" style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>
                   {post.type} - {new Date(post.date).toLocaleDateString()}
                 </p>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
                 <Button as={NavLink} to={`/post/${post.slug}`} variant="ghost">View</Button>
-                <Button variant="ghost">Edit</Button>
+                <Button variant="ghost" disabled>Edit</Button>
               </div>
             </div>
           ))}

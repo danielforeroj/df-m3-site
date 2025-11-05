@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from 'react';
 import { useParams, NavLink } from 'react-router-dom';
 import { posts } from '../data/mockData';
@@ -55,10 +54,10 @@ const PostDetailPage: React.FC = () => {
         {post.content_md}
       </div>
 
-      {post.lead_magnet && (
+      {(post as any).leadMagnetUrl && post.lead_magnet && (
         <div className="mt-12 text-center">
-          <Button href="#" as="a" variant="filled" icon="download">
-            {post.lead_magnet.cta}
+          <Button href={(post as any).leadMagnetUrl} as="a" variant="filled" icon="download" download>
+            {post.lead_magnet.cta || 'Download'}
           </Button>
         </div>
       )}

@@ -31,8 +31,7 @@ export interface CompanyLogo {
 
 export interface AboutCardData {
   title: string;
-  subtitle: string;
-  text: string;
+  body: string;
 }
 
 export interface SocialLink {
@@ -59,6 +58,7 @@ export interface Venture {
 }
 
 export interface HomePageData {
+    heroTitle: string;
     profileRoles: string[];
     logos: CompanyLogo[];
     aboutCard1: AboutCardData;

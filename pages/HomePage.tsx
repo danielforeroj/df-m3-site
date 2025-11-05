@@ -1,18 +1,23 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Button from '../components/Button';
 import Chip from '../components/Chip';
 import Card from '../components/Card';
 import LogoSlider from '../components/LogoSlider';
 import { NavLink } from 'react-router-dom';
 import { posts } from '../data/mockData';
-import { PostType, HomePageData } from '../types';
+import { PostType } from '../types';
+import { fetchHome, HomeContent } from '../lib/cms';
 
-interface HomePageProps {
-  data: HomePageData;
-}
+const HomePage: React.FC = () => {
+  const [content, setContent] = useState<HomeContent | null>(null);
 
-const HomePage: React.FC<HomePageProps> = ({ data }) => {
-  const { profileRoles, logos, aboutCard1, aboutCard2, socialLinks, heroButton1, heroButton2, ventures } = data;
+  useEffect(() => {
+    const loadContent = async () => {
+      const cmsData = await fetchHome();
+      setContent(cmsData);
+    };
+    loadContent();
+  }, []);
 
   const blogPosts = posts
     .filter(post => post.type === PostType.BLOG)
@@ -23,92 +28,102 @@ const HomePage: React.FC<HomePageProps> = ({ data }) => {
     <div className="space-y-16 md:space-y-24">
       {/* Hero Section */}
       <section className="text-center pt-12 md:pt-20">
-        <h1 className="text-5xl md:text-7xl font-extrabold tracking-tighter" style={{color: 'var(--md-sys-color-primary)'}}>Daniel Forero</h1>
+        <h1 className="text-5xl md:text-7xl font-extrabold tracking-tighter" style={{color: 'var(--md-sys-color-primary)'}}>
+          {content?.hero_title || "Daniel Forero"}
+        </h1>
         <div className="mt-4 flex flex-wrap items-center justify-center gap-2 max-w-2xl mx-auto">
-          {profileRoles.map((role) => (
+          {(content?.hero_tags || []).map((role) => (
             <Chip key={role}>{role}</Chip>
           ))}
         </div>
-        <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-          {heroButton1.enabled && (
-            <Button as="a" href={heroButton1.url} variant={heroButton1.variant} icon={heroButton1.icon}>
-              {heroButton1.text}
-            </Button>
-          )}
-          {heroButton2.enabled && (
-            <Button as="a" href={heroButton2.url} variant={heroButton2.variant} icon={heroButton2.icon} target="_blank" rel="noopener noreferrer">
-              {heroButton2.text}
-            </Button>
-          )}
-        </div>
+        {content?.hero_buttons && content.hero_buttons.length > 0 && (
+          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+            {content.hero_buttons.map((button, index) => (
+              <Button key={index} as="a" href={button.url} variant={index === 0 ? 'filled-to-ghost' : 'outlined'} target="_blank" rel="noopener noreferrer">
+                {button.label}
+              </Button>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* About Section */}
       <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="p-6 md:p-8">
-            <h2 className="text-3xl font-bold tracking-tight" style={{color: 'var(--md-sys-color-on-surface)'}}>{aboutCard1.title}</h2>
-            <p className="mt-4 text-lg" style={{color: 'var(--md-sys-color-on-surface)'}}>
-              {aboutCard1.subtitle}
-            </p>
-            <p className="mt-4" style={{color: 'var(--md-sys-color-on-surface-variant)'}}>
-              {aboutCard1.text}
+            <h2 className="text-3xl font-bold tracking-tight" style={{color: 'var(--md-sys-color-on-surface)'}}>
+              {content?.about?.title || "Who’s this guy?"}
+            </h2>
+            <p className="mt-4 whitespace-pre-line" style={{color: 'var(--md-sys-color-on-surface-variant)'}}>
+              {content?.about?.body || "Loading..."}
             </p>
         </Card>
         <Card className="p-6 md:p-8 flex flex-col justify-between">
             <div>
-                <h3 className="text-2xl font-bold tracking-tight" style={{color: 'var(--md-sys-color-on-surface)'}}>{aboutCard2.title}</h3>
-                <p className="mt-4" style={{color: 'var(--md-sys-color-on-surface-variant)'}}>
-                    {aboutCard2.subtitle}
+                <h3 className="text-2xl font-bold tracking-tight" style={{color: 'var(--md-sys-color-on-surface)'}}>
+                  {content?.operator?.title || "Operator ➜ Angel Investor"}
+                </h3>
+                <p className="mt-4 whitespace-pre-line" style={{color: 'var(--md-sys-color-on-surface-variant)'}}>
+                    {content?.operator?.body || "Loading..."}
                 </p>
             </div>
-            <div className="mt-6 flex flex-wrap gap-2">
-              {profileRoles.map(role => <Chip key={role}>{role}</Chip>)}
-            </div>
+            {(content?.hero_tags && content.hero_tags.length > 0) && (
+              <div className="mt-6 flex flex-wrap gap-2">
+                {content.hero_tags.map(role => <Chip key={role}>{role}</Chip>)}
+              </div>
+            )}
         </Card>
       </section>
 
       {/* Social Channels Section */}
-      <section className="text-center">
-        <h2 className="text-3xl font-bold tracking-tight">My Official SM Channels</h2>
-        <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-4">
-          {socialLinks.map(link => (
-             <Button key={link.id} as="a" href={link.url} target="_blank" rel="noopener noreferrer" variant="filled-to-ghost">{link.name}</Button>
-          ))}
-        </div>
-        <div 
-            className="mt-6 max-w-2xl mx-auto p-4 rounded-2xl inline-flex items-center gap-3"
-            style={{ backgroundColor: 'var(--md-sys-color-tertiary-container)', color: 'var(--md-sys-color-on-tertiary-container)'}}
-        >
-          <span className="material-symbols-outlined">warning</span>
-          <p className="font-medium text-sm">Watch out for scammers</p>
-        </div>
-      </section>
+      {content?.socials && content.socials.length > 0 && (
+        <section className="text-center">
+          <h2 className="text-3xl font-bold tracking-tight">My Official SM Channels</h2>
+          <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-4">
+            {content.socials.map(link => (
+              <Button key={link.name} as="a" href={link.url} target="_blank" rel="noopener noreferrer" variant="filled-to-ghost">{link.name}</Button>
+            ))}
+          </div>
+          <div 
+              className="mt-6 max-w-2xl mx-auto p-4 rounded-2xl inline-flex items-center gap-3"
+              style={{ backgroundColor: 'var(--md-sys-color-tertiary-container)', color: 'var(--md-sys-color-on-tertiary-container)'}}
+          >
+            <span className="material-symbols-outlined">warning</span>
+            <p className="font-medium text-sm">Watch out for scammers</p>
+          </div>
+        </section>
+      )}
 
       {/* Logo Slider Section */}
-      <section>
-        <h2 className="text-3xl font-bold tracking-tight text-center">Worked With</h2>
-        <div className="mt-8">
-            <LogoSlider logos={logos} />
-        </div>
-      </section>
+      {content?.logos && content.logos.length > 0 && (
+        <section>
+          <h2 className="text-3xl font-bold tracking-tight text-center">Worked With</h2>
+          <div className="mt-8">
+              <LogoSlider logos={content.logos.map(l => ({ name: l.name || '', logo: l.logoUrl }))} />
+          </div>
+        </section>
+      )}
 
       {/* Ventures Section */}
-      <section>
-        <h2 className="text-3xl font-bold tracking-tight text-center">What I’m Running</h2>
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-          {ventures.map((venture) => (
-            <Card key={venture.id} className="flex flex-col">
-              <div className="p-6 flex-grow">
-                <h3 className="text-xl font-semibold" style={{color: 'var(--md-sys-color-on-surface)'}}>{venture.title}</h3>
-                <p className="mt-2 text-sm">{venture.description}</p>
-              </div>
-              <div className="p-6 pt-0">
-                <Button as="a" href={venture.url} target="_blank" rel="noopener noreferrer" variant="ghost">{venture.cta}</Button>
-              </div>
-            </Card>
-          ))}
-        </div>
-      </section>
+      {content?.ventures && content.ventures.length > 0 && (
+        <section>
+          <h2 className="text-3xl font-bold tracking-tight text-center">What I’m Running</h2>
+          <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+            {content.ventures.map((venture, index) => (
+              <Card key={index} className="flex flex-col">
+                <div className="p-6 flex-grow">
+                  <h3 className="text-xl font-semibold" style={{color: 'var(--md-sys-color-on-surface)'}}>{venture.title}</h3>
+                  {venture.body && <p className="mt-2 text-sm">{venture.body}</p>}
+                </div>
+                {venture.ctaLabel && venture.ctaUrl && (
+                  <div className="p-6 pt-0">
+                    <Button as="a" href={venture.ctaUrl} target="_blank" rel="noopener noreferrer" variant="ghost">{venture.ctaLabel}</Button>
+                  </div>
+                )}
+              </Card>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Blog Section */}
       <section>

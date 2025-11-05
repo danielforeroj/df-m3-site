@@ -6,10 +6,9 @@ import HomePage from './pages/HomePage';
 import PostListPage from './pages/PostListPage';
 import PostDetailPage from './pages/PostDetailPage';
 import AdminPage from './pages/AdminPage';
-import { PostType, HomePageData } from './types';
+import { PostType } from './types';
 import SkipToContent from './components/SkipToContent';
 import ThemePicker from './components/ThemePicker';
-import { initialHomePageData } from './data/mockData';
 import { generatePalette } from './themes/colorPalettes';
 
 const ScrollToTop = () => {
@@ -26,11 +25,11 @@ type Theme = 'light' | 'dark' | 'system';
 
 const App: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [homepageData, setHomepageData] = useState<HomePageData>(initialHomePageData);
   
   // Centralized state for theme management
   const [theme, setTheme] = useState<Theme>(() => (localStorage.getItem('df_theme') as Theme | null) || 'system');
   const [accent, setAccent] = useState<string>(() => localStorage.getItem('df_accent') || '#3B82F6');
+
 
   // Memoized function to apply the theme to the DOM
   const applyTheme = useCallback((mode: Theme) => {
@@ -104,7 +103,7 @@ const App: React.FC = () => {
         <Header isLoggedIn={isLoggedIn} />
         <main id="main-content" className="flex-grow w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <Routes>
-            <Route path="/" element={<HomePage data={homepageData} />} />
+            <Route path="/" element={<HomePage />} />
             <Route path="/blog" element={<PostListPage type={PostType.BLOG} title="Blog" />} />
             <Route path="/research" element={<PostListPage type={PostType.RESEARCH} title="Research" />} />
             {/* FIX: Corrected a typo in the enum member access from `PostType.LEAD_ MAGNET` to `PostType.LEAD_MAGNET`. */}
@@ -117,8 +116,6 @@ const App: React.FC = () => {
                   isLoggedIn={isLoggedIn} 
                   onLogin={handleLogin} 
                   onLogout={handleLogout}
-                  homepageData={homepageData}
-                  setHomepageData={setHomepageData}
                 />
               } 
             />
