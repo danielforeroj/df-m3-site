@@ -1,13 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script>
-    /* DF settings/theme bootstrap (CORS-aware):
-     * - Uses a conditional fetch to handle different environments.
-     * - On the live domain, it makes a standard same-origin request.
-     * - On preview domains (like AI Studio), it makes a cross-origin CORS request.
-     * - This robustly handles CORS policies and prevents "Failed to fetch" errors.
-     */
+  <!-- keep all local paths relative in preview environments -->
+  <base href="./">
+
+  <script>
+    /* DF settings/theme bootstrap (CORS-aware) */
     (function () {
       const set = (k,v)=>localStorage.setItem(k,v);
       const get = (k)=>localStorage.getItem(k);
@@ -34,25 +32,23 @@
         const isLive = window.location.hostname.includes('danielforeroj.com');
 
         if (isLive) {
-          // On the live domain, use a relative path (no CORS needed).
+          // live: same-origin, no CORS
           API_BASE = '';
         } else {
-          // On preview/dev domains, use the full URL with CORS.
+          // previews/dev: cross-origin to canonical domain
           API_BASE = 'https://danielforeroj.com';
           fetchOpts = { mode: 'cors', credentials: 'omit' };
         }
 
         try {
           const r = await fetch(`${API_BASE}/api/settings/get.php`, fetchOpts);
-          if (!r.ok) {
-            throw new Error(`Network response was not ok, status: ${r.status}`);
-          }
+          if (!r.ok) throw new Error(`Network response was not ok, status: ${r.status}`);
           const d = await r.json();
           const s = d.settings || {};
           window.__siteSettings = s;
 
-          // SEO defaults (overridable by admin)
-          if (s.seo?.site_title)       document.title = s.seo.site_title;
+          // SEO
+          if (s.seo?.site_title) document.title = s.seo.site_title;
           if (s.seo?.site_description) {
             let m=document.querySelector('meta[name="description"]');
             if(!m){ m=document.createElement('meta'); m.name='description'; document.head.appendChild(m); }
@@ -66,7 +62,7 @@
           applyTheme(get('df_theme')   || adminTheme);
           applyAccent(get('df_accent') || adminAccent);
 
-          // Optional pixels
+          // Pixels
           if (s.pixels?.gtm_id) {
             (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});
               var f=d.getElementsByTagName(s)[0], j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:''; j.async=true;
@@ -109,159 +105,147 @@
 
       loadSettings();
     })();
-    </script>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Daniel Forero • Material 3 Web Portfolio</title>
-    <meta name="description" content="I turn Web3 ideas into real-world businesses—and then make sure the world hears about them.">
+  </script>
 
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="#">
-    <meta property="og:title" content="Daniel Forero • Material 3 Web Portfolio">
-    <meta property="og:description" content="I turn Web3 ideas into real-world businesses—and then make sure the world hears about them.">
-    <meta property="og:image" content="https://picsum.photos/1200/630">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Daniel Forero • Material 3 Web Portfolio</title>
+  <meta name="description" content="I turn Web3 ideas into real-world businesses—and then make sure the world hears about them.">
 
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="#">
-    <meta property="twitter:title" content="Daniel Forero • Material 3 Web Portfolio">
-    <meta property="twitter:description" content="I turn Web3 ideas into real-world businesses—and then make sure the world hears about them.">
-    <meta property="twitter:image" content="https://picsum.photos/1200/630">
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="#">
+  <meta property="og:title" content="Daniel Forero • Material 3 Web Portfolio">
+  <meta property="og:description" content="I turn Web3 ideas into real-world businesses—and then make sure the world hears about them.">
+  <meta property="og:image" content="https://picsum.photos/1200/630">
 
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
-    <style>
-      /* Material 3 Inspired Theme Tokens - FALLBACK ONLY */
-      :root {
-        /* Default Light Theme Colors */
-        --md-sys-color-primary: #005FAF;
-        --md-sys-color-on-primary: #FFFFFF;
-        --md-sys-color-primary-container: #D5E3FF;
-        --md-sys-color-on-primary-container: #001C3B;
-        --md-sys-color-secondary: #535f70;
-        --md-sys-color-on-secondary: #FFFFFF;
-        --md-sys-color-secondary-container: #D7E3F8;
-        --md-sys-color-on-secondary-container: #101C2B;
-        --md-sys-color-tertiary: #6B5778;
-        --md-sys-color-on-tertiary: #FFFFFF;
-        --md-sys-color-tertiary-container: #F3DAFF;
-        --md-sys-color-on-tertiary-container: #251431;
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="#">
+  <meta property="twitter:title" content="Daniel Forero • Material 3 Web Portfolio">
+  <meta property="twitter:description" content="I turn Web3 ideas into real-world businesses—and then make sure the world hears about them.">
+  <meta property="twitter:image" content="https://picsum.photos/1200/630">
 
-        /* Base colors that are consistent across themes */
-        --md-sys-color-error: #BA1A1A;
-        --md-sys-color-on-error: #FFFFFF;
-        --md-sys-color-error-container: #FFDAD6;
-        --md-sys-color-on-error-container: #410002;
-        --md-sys-color-background: #F8F9FA;
-        --md-sys-color-on-background: #1A1C1E;
-        --md-sys-color-surface: #F8F9FA;
-        --md-sys-color-on-surface: #1A1C1E;
-        --md-sys-color-surface-variant: #E1E2E6;
-        --md-sys-color-on-surface-variant: #43474E;
-        --md-sys-color-outline: #74777F;
-        --md-sys-color-shadow: #000000;
-        --md-sys-color-inverse-surface: #2F3033;
-        --md-sys-color-inverse-on-surface: #F1F0F4;
-        --md-sys-color-inverse-primary: #BDC1C6;
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
 
-        font-family: 'Inter', sans-serif;
-      }
+  <style>
+    /* Material 3 Inspired Theme Tokens - FALLBACK ONLY */
+    :root {
+      /* Default Light Theme Colors */
+      --md-sys-color-primary: #005FAF;
+      --md-sys-color-on-primary: #FFFFFF;
+      --md-sys-color-primary-container: #D5E3FF;
+      --md-sys-color-on-primary-container: #001C3B;
+      --md-sys-color-secondary: #535f70;
+      --md-sys-color-on-secondary: #FFFFFF;
+      --md-sys-color-secondary-container: #D7E3F8;
+      --md-sys-color-on-secondary-container: #101C2B;
+      --md-sys-color-tertiary: #6B5778;
+      --md-sys-color-on-tertiary: #FFFFFF;
+      --md-sys-color-tertiary-container: #F3DAFF;
+      --md-sys-color-on-tertiary-container: #251431;
 
-      .dark {
-         /* Default Dark Theme Colors */
-        --md-sys-color-primary: #A7C8FF;
-        --md-sys-color-on-primary: #003060;
-        --md-sys-color-primary-container: #004787;
-        --md-sys-color-on-primary-container: #D5E3FF;
-        --md-sys-color-secondary: #BBC7DB;
-        --md-sys-color-on-secondary: #253141;
-        --md-sys-color-secondary-container: #3C4858;
-        --md-sys-color-on-secondary-container: #D7E3F8;
-        --md-sys-color-tertiary: #D7BDE4;
-        --md-sys-color-on-tertiary: #3B2947;
-        --md-sys-color-tertiary-container: #52405F;
-        --md-sys-color-on-tertiary-container: #F3DAFF;
-        
-         /* Base dark colors */
-        --md-sys-color-error: #FFB4AB;
-        --md-sys-color-on-error: #690005;
-        --md-sys-color-error-container: #93000A;
-        --md-sys-color-on-error-container: #FFDAD6;
-        --md-sys-color-background: #1A1C1E;
-        --md-sys-color-on-background: #E3E2E6;
-        --md-sys-color-surface: #1A1C1E;
-        --md-sys-color-on-surface: #E3E2E6;
-        --md-sys-color-surface-variant: #43474E;
-        --md-sys-color-on-surface-variant: #C4C6CF;
-        --md-sys-color-outline: #8E9199;
-        --md-sys-color-shadow: #000000;
-        --md-sys-color-inverse-surface: #E3E2E6;
-        --md-sys-color-inverse-on-surface: #1A1C1E;
-        --md-sys-color-inverse-primary: #5F6368;
-      }
-      body {
-        background-color: var(--md-sys-color-background);
-        color: var(--md-sys-color-on-background);
-      }
-      .material-symbols-outlined {
-        font-variation-settings:
-        'FILL' 0,
-        'wght' 400,
-        'GRAD' 0,
-        'opsz' 24
-      }
+      /* Base colors that are consistent across themes */
+      --md-sys-color-error: #BA1A1A;
+      --md-sys-color-on-error: #FFFFFF;
+      --md-sys-color-error-container: #FFDAD6;
+      --md-sys-color-on-error-container: #410002;
+      --md-sys-color-background: #F8F9FA;
+      --md-sys-color-on-background: #1A1C1E;
+      --md-sys-color-surface: #F8F9FA;
+      --md-sys-color-on-surface: #1A1C1E;
+      --md-sys-color-surface-variant: #E1E2E6;
+      --md-sys-color-on-surface-variant: #43474E;
+      --md-sys-color-outline: #74777F;
+      --md-sys-color-shadow: #000000;
+      --md-sys-color-inverse-surface: #2F3033;
+      --md-sys-color-inverse-on-surface: #F1F0F4;
+      --md-sys-color-inverse-primary: #BDC1C6;
 
-      /* Logo Slider Animation */
-      @keyframes scroll {
-        from { transform: translateX(0); }
-        to { transform: translateX(-100%); }
-      }
-      .animate-scroll {
-        animation: scroll 60s linear infinite;
-      }
-    </style>
-<script type="importmap">
-{
-  "imports": {
-    "react": "https://aistudiocdn.com/react@^19.2.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.9.5",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.28.0"
+      font-family: 'Inter', sans-serif;
+    }
+
+    .dark {
+      /* Default Dark Theme Colors */
+      --md-sys-color-primary: #A7C8FF;
+      --md-sys-color-on-primary: #003060;
+      --md-sys-color-primary-container: #004787;
+      --md-sys-color-on-primary-container: #D5E3FF;
+      --md-sys-color-secondary: #BBC7DB;
+      --md-sys-color-on-secondary: #253141;
+      --md-sys-color-secondary-container: #3C4858;
+      --md-sys-color-on-secondary-container: #D7E3F8;
+      --md-sys-color-tertiary: #D7BDE4;
+      --md-sys-color-on-tertiary: #3B2947;
+      --md-sys-color-tertiary-container: #52405F;
+      --md-sys-color-on-tertiary-container: #F3DAFF;
+
+      /* Base dark colors */
+      --md-sys-color-error: #FFB4AB;
+      --md-sys-color-on-error: #690005;
+      --md-sys-color-error-container: #93000A;
+      --md-sys-color-on-error-container: #FFDAD6;
+      --md-sys-color-background: #1A1C1E;
+      --md-sys-color-on-background: #E3E2E6;
+      --md-sys-color-surface: #1A1C1E;
+      --md-sys-color-on-surface: #E3E2E6;
+      --md-sys-color-surface-variant: #43474E;
+      --md-sys-color-on-surface-variant: #C4C6CF;
+      --md-sys-color-outline: #8E9199;
+      --md-sys-color-shadow: #000000;
+      --md-sys-color-inverse-surface: #E3E2E6;
+      --md-sys-color-inverse-on-surface: #1A1C1E;
+      --md-sys-color-inverse-primary: #5F6368;
+    }
+    body { background-color: var(--md-sys-color-background); color: var(--md-sys-color-on-background); }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    @keyframes scroll { from { transform: translateX(0); } to { transform: translateX(-100%); } }
+    .animate-scroll { animation: scroll 60s linear infinite; }
+  </style>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "react": "https://aistudiocdn.com/react@^19.2.0",
+      "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+      "react/": "https://aistudiocdn.com/react@^19.2.0/",
+      "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.9.5",
+      "@google/genai": "https://aistudiocdn.com/@google/genai@^1.28.0"
+    }
   }
-}
-</script>
+  </script>
 </head>
 <body class="antialiased">
-    <div id="root"></div>
-    <script type="module" src="/index.tsx"></script>
-<script>
-/* Hook clicks from your floating palette.
- * Give its container id="theme-fab".
- * Add data-theme="light|dark|system" on the theme switch control(s).
- * Add data-accent="#HEX" on each color dot.
- */
-document.addEventListener('click', (e) => {
-  const root = document.getElementById('theme-fab');
-  if (!root) return;
+  <div id="root"></div>
 
-  const th = e.target.closest('[data-theme]');
-  if (th && root.contains(th)) {
-    e.preventDefault();
-    window.DFTheme?.applyTheme(th.dataset.theme, true);
-    return;
-  }
+  <!-- IMPORTANT: relative path so previews don't hit /index.tsx on their own origin -->
+  <script type="module" src="./index.tsx"></script>
 
-  const ac = e.target.closest('[data-accent]');
-  if (ac && root.contains(ac)) {
-    e.preventDefault();
-    window.DFTheme?.applyAccent(ac.dataset.accent, true);
-  }
-});
-</script>
+  <script>
+  /* Hook clicks from your floating palette. */
+  document.addEventListener('click', (e) => {
+    const root = document.getElementById('theme-fab');
+    if (!root) return;
+
+    const th = e.target.closest('[data-theme]');
+    if (th && root.contains(th)) {
+      e.preventDefault();
+      window.DFTheme?.applyTheme(th.dataset.theme, true);
+      return;
+    }
+
+    const ac = e.target.closest('[data-accent]');
+    if (ac && root.contains(ac)) {
+      e.preventDefault();
+      window.DFTheme?.applyAccent(ac.dataset.accent, true);
+    }
+  });
+  </script>
 </body>
 </html>
