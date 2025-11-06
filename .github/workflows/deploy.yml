@@ -31,34 +31,30 @@ jobs:
           path: dist
 
   deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download dist artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: dist
-          path: dist
+  needs: build
+  runs-on: ubuntu-latest
+  steps:
+    - name: Download dist artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: dist
+        path: dist
 
-      - name: Validate required secrets
-        run: |
-          test -n "${{ secrets.FTP_SERVER }}"   || (echo "Missing secret: FTP_SERVER" && exit 1)
-          test -n "${{ secrets.FTP_USERNAME }}" || (echo "Missing secret: FTP_USERNAME" && exit 1)
-          test -n "${{ secrets.FTP_PASSWORD }}" || (echo "Missing secret: FTP_PASSWORD" && exit 1)
-          # FTP_PORT is optional; default 21 if empty.
+    - name: Verify dist contains files (debug)
+      run: ls -la dist
 
-      - name: Deploy via FTPS
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server:   ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          protocol: ftps
-          port: ${{ secrets.FTP_PORT || 21 }}
-          local-dir: dist
-          server-dir: /public_html/
-          exclude: |
-            **/.git*
-            **/.github/**
-            **/.DS_Store
-            **/node_modules/**
+    - name: Deploy via FTPS
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      with:
+        server:   ${{ secrets.FTP_SERVER }}
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        protocol: ftps
+        port:      ${{ secrets.FTP_PORT }}   # set to 21 in your repo Secrets
+        local-dir: dist/                    # <-- trailing slash required
+        server-dir: /public_html/           # <-- keep trailing slash here too
+        exclude: |
+          **/.git*
+          **/.github/**
+          **/.DS_Store
+          **/node_modules/**
