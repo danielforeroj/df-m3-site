@@ -23,8 +23,16 @@ const ScrollToTop = () => {
 type Theme = 'light' | 'dark' | 'system';
 
 const App: React.FC = () => {
-  const [theme, setTheme] = useState<Theme>(() => (localStorage.getItem('df_theme') as Theme | null) || 'system');
-  const [accent, setAccent] = useState<string>(() => localStorage.getItem('df_accent') || '#3B82F6');
+  const [theme, setTheme] = useState<Theme>(() => 
+    (localStorage.getItem('df_theme') as Theme | null) || 
+    window.__siteSettings?.branding?.theme_default || 
+    'system'
+  );
+  const [accent, setAccent] = useState<string>(() => 
+    localStorage.getItem('df_accent') || 
+    window.__siteSettings?.branding?.accent_default || 
+    '#3B82F6'
+  );
   
   const applyTheme = useCallback((mode: Theme) => {
     const r = document.documentElement;

@@ -2,40 +2,70 @@
 <html lang="en">
 <head>
   <script>
-  /* DF settings/theme bootstrap (CORS-aware) */
+  /* DF settings/theme bootstrap (static, no backend) */
   (function () {
     const set=(k,v)=>localStorage.setItem(k,v);
     const get=(k)=>localStorage.getItem(k);
 
-    function applyAccent(hex, persist=false){
-      if(hex){
-        document.documentElement.style.setProperty('--accent',hex);
-        if(persist) set('df_accent',hex);
+    // Static site settings, per your request to move away from any backend dependency.
+    window.__siteSettings = {
+      branding: {
+        theme_default: "system",
+        accent_default: "#3B82F6",
+        palette: ['#6B7280', '#3B82F6', '#22C55E', '#0EA5E9', '#EF4444']
+      },
+      seo: {
+        site_title: "Daniel Forero • Material 3 Web Portfolio",
+        site_description: "I turn Web3 ideas into real-world businesses—and then make sure the world hears about them."
       }
-    }
+    };
+
     function applyTheme(mode, persist=false){
       const root=document.documentElement;
-      root.dataset.theme=mode;
+      let finalMode = mode;
+      if (mode === 'system') {
+        finalMode = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+      root.dataset.theme = finalMode;
       root.classList.remove('light','dark');
-      if(mode==='light') root.classList.add('light');
-      if(mode==='dark')  root.classList.add('dark');
+      if(finalMode === 'light') root.classList.add('light');
+      if(finalMode === 'dark')  root.classList.add('dark');
       if(persist) set('df_theme',mode);
     }
 
-    // Using fallback logic directly to remove backend dependency.
-    const adminTheme  = 'system';
-    const adminAccent = '#3B82F6';
-    applyTheme(get('df_theme')   || adminTheme);
-    applyAccent(get('df_accent') || adminAccent);
+    // This function is just a hook for the theme picker FAB.
+    // The actual palette generation is handled inside the React app.
+    function applyAccent(hex, persist=false){
+      if(persist) set('df_accent',hex);
+      // The React app will handle applying the theme dynamically.
+    }
 
+    const s = window.__siteSettings;
+    document.title = s.seo.site_title;
+    const metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc) metaDesc.setAttribute('content', s.seo.site_description);
+    
+    const defaultTheme  = s.branding.theme_default;
+    const defaultAccent = s.branding.accent_default;
+
+    applyTheme(get('df_theme') || defaultTheme);
+    
+    // The main React app will apply the detailed accent palette on load.
+    // We just ensure the value is in localStorage for it to pick up.
+    if (!get('df_accent')) {
+      set('df_accent', defaultAccent);
+    }
+    
     window.DFTheme = {
       applyTheme, applyAccent,
       resetToDefaults(){
         localStorage.removeItem('df_theme');
         localStorage.removeItem('df_accent');
-        applyTheme(adminTheme); applyAccent(adminAccent);
+        applyTheme(defaultTheme); 
+        applyAccent(defaultAccent, true);
+        window.location.reload();
       },
-      palette: ['#6B7280', '#3B82F6', '#22C55E', '#0EA5E9', '#EF4444']
+      palette: s.branding.palette
     };
   })();
   </script>
@@ -137,17 +167,5 @@
 </head>
 <body class="antialiased">
   <div id="root"></div>
-
-  <script>
-  /* Floating palette hooks */
-  document.addEventListener('click', (e) => {
-    const root = document.getElementById('theme-fab');
-    if (!root) return;
-    const th = e.target.closest('[data-theme]');
-    if (th && root.contains(th)) { e.preventDefault(); window.DFTheme?.applyTheme(th.dataset.theme, true); return; }
-    const ac = e.target.closest('[data-accent]');
-    if (ac && root.contains(ac)) { e.preventDefault(); window.DFTheme?.applyAccent(ac.dataset.accent, true); }
-  });
-  </script>
 </body>
 </html>
