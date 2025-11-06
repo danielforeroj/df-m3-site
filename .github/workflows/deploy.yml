@@ -30,31 +30,16 @@ jobs:
           name: dist
           path: dist
 
-      # --- Use ONE of the blocks below ---
-
-      # A) SFTP (recommended). Enable SSH in cPanel first and add your public key.
-      - name: Deploy via SFTP
-        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
-        with:
-          server: ${{ secrets.CPANEL_SFTP_SERVER }}   # e.g. danielforeroj.com
-          username: ${{ secrets.CPANEL_SFTP_USERNAME }}
-          port: ${{ secrets.CPANEL_SFTP_PORT }}       # usually 22
-          private_key: ${{ secrets.CPANEL_SSH_PRIVATE_KEY }}
-          local_path: dist/*
-          remote_path: public_html/
-          delete_remote_files: false
-
-      # B) FTPS (fallback if you don’t have SSH)
-      # - name: Deploy via FTPS
-      #   uses: SamKirkland/FTP-Deploy-Action@v4
-      #   with:
-      #     server: ${{ secrets.CPANEL_FTP_SERVER }}
-      #     username: ${{ secrets.CPANEL_FTP_USERNAME }}
-      #     password: ${{ secrets.CPANEL_FTP_PASSWORD }}
-      #     protocol: ftps
-      #     port: 21
-      #     local-dir: dist/
-      #     server-dir: /public_html/
-      #     exclude: |
-      #       **/.git*
-      #       **/.DS_Store
+      name: Deploy via FTPS
+         uses: SamKirkland/FTP-Deploy-Action@v4
+         with:
+           server: ${{ secrets.CPANEL_FTP_SERVER }}
+           username: ${{ secrets.CPANEL_FTP_USERNAME }}
+           password: ${{ secrets.CPANEL_FTP_PASSWORD }}
+           protocol: ftps
+           port: 21
+           local-dir: dist/
+           server-dir: /public_html/
+           exclude: |
+             **/.git*
+             **/.DS_Store
