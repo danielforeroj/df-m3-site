@@ -137,23 +137,6 @@
 </head>
 <body class="antialiased">
   <div id="root"></div>
-
-  <!-- Boot module:
-       If a built bundle exists (e.g., /assets/index-xxxxx.js), do nothing.
-       Otherwise (AI Studio / unbundled), load index.tsx directly. -->
-  <script id="df-module-boot">
-    (function () {
-      var hasBuilt = Array.from(document.scripts).some(function (s) {
-        return s.type === 'module' && /\/assets\/index-.*\.js(?:$|\?)/.test(s.src);
-      });
-      if (!hasBuilt) {
-        var s = document.createElement('script');
-        s.type = 'module';
-        s.crossOrigin = '';
-        s.src = 'index.tsx'; // relative path works in AI Studio
-        document.head.appendChild(s);
-      }
-    })();
-  </script>
+  <script type="module" src="/index.tsx"></script>
 </body>
 </html>
