@@ -139,13 +139,15 @@
   (function () {
     // Your live host and current built file name:
     const LIVE_HOST = 'danielforeroj.com';
-    const BUNDLE    = '/assets/index-CLyGj7VB.js'; // ← update only if your build hash changes
+    // FIX: Added a dynamic cache-busting query string to the bundle path.
+    // This forces browsers and server caches to fetch the new version on every update.
+    const BUNDLE = '/assets/index-CLyGj7VB.js?v=update-' + Date.now();
 
     const onLive = location.hostname === LIVE_HOST;
 
     // If the live HTML already includes the bundle tag, don't inject again.
     const alreadyHasBundle = Array.from(document.scripts)
-      .some(s => (s.src || '').includes(BUNDLE));
+      .some(s => (s.src || '').includes(BUNDLE.split('?')[0])); // Check without query string
     if (onLive && alreadyHasBundle) return;
 
     // In previews (AI Studio), make all relative URLs resolve against your domain
