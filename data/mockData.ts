@@ -111,25 +111,6 @@ This isn't just theory. This is a battle-tested framework for turning ambitious 
     tags: ['web3', 'growth', 'marketing', 'startups'],
   },
   {
-    type: PostType.RESEARCH,
-    title: 'Fractionalized Real Estate: The Future of Property Investment',
-    slug: 'fractionalized-real-estate',
-    date: '2023-09-15T14:30:00Z',
-    excerpt: 'An analysis of tokenized, yield-bearing real estate and its potential to democratize property ownership for everyday investors.',
-    content_md: `
-Keystate is built on a simple premise: property ownership and liquidity should be accessible to everyone. Traditional real estate is illiquid, expensive, and gated. Tokenization shatters these barriers.
-
-This paper explores the technical and financial models behind fractionalizing property. We cover:
-- Legal frameworks for asset tokenization.
-- Smart contract architecture for ownership and yield distribution.
-- The role of decentralized identity in compliance.
-- Case studies and future market projections.
-
-The conclusion is clear: a dual-track platform that combines fractional ownership with crypto-collateralized mortgages can unlock trillions in value and make property investment trully accessible.
-    `,
-    tags: ['real-estate', 'tokenization', 'defi', 'investment'],
-  },
-  {
     type: PostType.LEAD_MAGNET,
     title: 'The Ultimate Guide to Stablecoin Arbitrage in LATAM',
     slug: 'latam-stablecoin-guide',
