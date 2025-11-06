@@ -21,7 +21,7 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      - name: Install deps (package-lock present)
+      - name: Install deps (lockfile present)
         run: npm ci
 
       - name: Build
@@ -53,7 +53,7 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           protocol: ftps
-          port:      ${{ secrets.FTP_PORT }}   # set this secret to 21 unless Namecheap gave a custom port
+          port:      ${{ secrets.FTP_PORT }}   # set to 21 unless your host says otherwise
           local-dir: dist/                     # must end with /
           server-dir: /public_html/            # keep trailing /
           exclude: |
