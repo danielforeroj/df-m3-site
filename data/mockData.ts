@@ -4,6 +4,11 @@ export const profileData = {
   roles: ["Father", "Husband", "Marketer", "Angel Investor", "Nerd", "Crypto Degen"],
 };
 
+// HOW TO ADD LOGOS:
+// To add a logo to the "Worked With" slider, add a new object to this `companyLogos` array.
+// - `name`: The name of the company.
+// - `logo`: A direct URL to an SVG version of the company's logo.
+//   You can find many logos at sites like https://cdn.svgporn.com/
 export const companyLogos = [
   { name: 'Google', logo: 'https://cdn.svgporn.com/logos/google.svg' },
   { name: 'Apple', logo: 'https://cdn.svgporn.com/logos/apple.svg' },
@@ -57,10 +62,10 @@ export const initialHomePageData: HomePageData = {
   ventures: [
     {
       id: '1',
-      title: "Founder & CEO at Keystate",
-      description: "A dual-track platform that fractionalizes yield bearing real estate for everyday investors from $50, and issues decentralized, crypto-collateralized mortgages, making property ownership and liquidity trully accessible.",
-      cta: "Learn More About Keystate",
-      url: "https://keystate.co"
+      title: "GTM Mentor at Outlier Ventures",
+      description: "Advising the next generation of Web3 founders on go-to-market strategy, product positioning, and narrative development within the Outlier Ventures accelerator program.",
+      cta: "Learn More About Outlier Ventures",
+      url: "https://outlierventures.io"
     },
     {
       id: '2',
