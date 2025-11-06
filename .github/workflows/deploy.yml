@@ -8,6 +8,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -23,9 +27,11 @@ jobs:
 
       - name: Install deps (lockfile present)
         run: npm ci
+        shell: bash
 
       - name: Build
         run: npm run build
+        shell: bash
 
       - name: Upload dist artifact
         uses: actions/upload-artifact@v4
@@ -45,32 +51,34 @@ jobs:
 
       - name: Verify dist contents (debug)
         run: |
-          echo "PWD: $(pwd)"
+          echo "PWD=$(pwd)"
           ls -la
           echo "----- dist -----"
           ls -la dist
           echo "----- dist/assets (if exists) -----"
           ls -la dist/assets || true
-          echo "----- dist/index.html (first 80 lines) -----"
-          head -n 80 dist/index.html || true
+          echo "----- first 60 lines of dist/index.html -----"
+          head -n 60 dist/index.html || true
+        shell: bash
 
-      - name: Guard: index.html should not reference index.tsx
+      - name: Guard - index.html should not reference raw TS/TSX files
         run: |
-          if grep -q "index.tsx" dist/index.html; then
-            echo "::error::dist/index.html references index.tsx. Vite didn't rewrite the entry to /assets/*.js."
+          if grep -qE 'index\.tsx|index\.ts|src/' dist/index.html; then
+            echo "::error::dist/index.html references source files (TS/TSX/src). Ensure Vite built output and entry script is rewritten to /assets/*.js"
             exit 1
           fi
+        shell: bash
 
       - name: Deploy via FTPS
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          server: ${{ secrets.FTP_SERVER }}
+          server:   ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           protocol: ftps
-          port: ${{ secrets.FTP_PORT }}     # e.g. 21
-          local-dir: dist/                  # must end with /
-          server-dir: /                     # if your FTP user is chrooted to public_html
+          port:      ${{ secrets.FTP_PORT }}   # e.g. 21
+          local-dir: dist/                     # must end with /
+          server-dir: ./                       # if your FTP root IS public_html; else use /public_html/
           exclude: |
             **/.git*
             **/.github/**
