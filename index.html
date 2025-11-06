@@ -87,6 +87,21 @@
         };
       } catch(e){
         console.error('settings bootstrap failed', e);
+        // Fallback for when the API is unreachable (e.g., CORS issue in preview)
+        const adminTheme  = 'system';
+        const adminAccent = '#3B82F6';
+        applyTheme(get('df_theme')   || adminTheme);
+        applyAccent(get('df_accent') || adminAccent);
+
+        window.DFTheme = {
+          applyTheme, applyAccent,
+          resetToDefaults(){
+            localStorage.removeItem('df_theme');
+            localStorage.removeItem('df_accent');
+            applyTheme(adminTheme); applyAccent(adminAccent);
+          },
+          palette: ['#6B7280', '#3B82F6', '#22C55E', '#0EA5E9', '#EF4444']
+        };
       }
     }
     loadSettings();
