@@ -43,33 +43,34 @@ jobs:
           name: dist
           path: dist
 
-      - name: Verify dist contains files (debug)
-        run: ls -la dist
-
-      - name: Show generated index.html & assets (debug)
+      - name: Verify dist contents (debug)
         run: |
+          echo "PWD: $(pwd)"
+          ls -la
+          echo "----- dist -----"
+          ls -la dist
+          echo "----- dist/assets (if exists) -----"
+          ls -la dist/assets || true
           echo "----- dist/index.html (first 80 lines) -----"
           head -n 80 dist/index.html || true
-          echo "----- dist/assets -----"
-          ls -la dist/assets || true
 
-      - name: Guard: built HTML should not reference index.tsx
+      - name: Guard: index.html should not reference index.tsx
         run: |
-          if grep -R "index.tsx" -n dist/index.html; then
-            echo "::error::Built index.html still references index.tsx (bad entry)."
+          if grep -q "index.tsx" dist/index.html; then
+            echo "::error::dist/index.html references index.tsx. Vite didn't rewrite the entry to /assets/*.js."
             exit 1
           fi
 
       - name: Deploy via FTPS
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          server:   ${{ secrets.FTP_SERVER }}
+          server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           protocol: ftps
-          port:     ${{ secrets.FTP_PORT }}
-          local-dir: dist/          # must end with /
-          server-dir: /             # adjust if your FTP user lands above/below public_html
+          port: ${{ secrets.FTP_PORT }}     # e.g. 21
+          local-dir: dist/                  # must end with /
+          server-dir: /                     # if your FTP user is chrooted to public_html
           exclude: |
             **/.git*
             **/.github/**
