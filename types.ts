@@ -1,5 +1,4 @@
 
-
 export enum PostType {
   BLOG = 'blog',
   RESEARCH = 'research',
@@ -23,48 +22,18 @@ export interface Post {
   lead_magnet?: LeadMagnet;
 }
 
-// New types for editable homepage content
-export interface CompanyLogo {
-  name: string;
-  logo: string;
-}
+// Unified types for homepage content, replacing the old CMS-related types.
+export type HomeButton = { label: string; url: string };
+export type Venture = { title: string; body?: string; ctaLabel?: string; ctaUrl?: string };
+export type LogoItem = { name?: string; logoUrl: string };
 
-export interface AboutCardData {
-  title: string;
-  body: string;
-}
-
-export interface SocialLink {
-  id: string;
-  name: string;
-  url: string;
-}
-
-export interface CtaButton {
-  id: string;
-  text: string;
-  url: string;
-  variant: 'filled' | 'tonal' | 'outlined' | 'ghost' | 'filled-to-ghost';
-  icon?: string;
-  enabled: boolean;
-}
-
-export interface Venture {
-  id: string;
-  title: string;
-  description: string;
-  cta: string;
-  url: string;
-}
-
-export interface HomePageData {
-    heroTitle: string;
-    profileRoles: string[];
-    logos: CompanyLogo[];
-    aboutCard1: AboutCardData;
-    aboutCard2: AboutCardData;
-    socialLinks: SocialLink[];
-    heroButton1: CtaButton;
-    heroButton2: CtaButton;
-    ventures: Venture[];
-}
+export type HomeContent = {
+  hero_title: string;
+  hero_tags: string[];
+  about: { title: string; body: string };
+  operator: { title: string; body: string };
+  socials: { name: string; url: string }[];
+  hero_buttons?: HomeButton[];
+  ventures?: Venture[];
+  logos?: LogoItem[];
+};

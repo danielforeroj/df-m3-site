@@ -3,47 +3,15 @@ import Button from '../components/Button';
 import Chip from '../components/Chip';
 import Card from '../components/Card';
 import { NavLink } from 'react-router-dom';
-import { posts, initialHomePageData } from '../data/mockData';
-import { PostType } from '../types';
-import { HomeContent } from '../lib/cms';
+import { posts, initialHomeContent } from '../data/mockData';
+import { PostType, HomeContent } from '../types';
 import LogoSlider from '../components/LogoSlider';
-
-// Helper function to map mock data to the CMS content structure
-const mapMockDataToHomeContent = (mockData: any): HomeContent => {
-  return {
-    hero_title: mockData.heroTitle,
-    hero_tags: mockData.profileRoles,
-    about: {
-      title: mockData.aboutCard1.title,
-      body: mockData.aboutCard1.body,
-    },
-    operator: {
-      title: mockData.aboutCard2.title,
-      body: mockData.aboutCard2.body,
-    },
-    socials: mockData.socialLinks.map(({ name, url }: any) => ({ name, url })),
-    hero_buttons: [mockData.heroButton1, mockData.heroButton2]
-      .filter((b: any) => b.enabled)
-      .map((b: any) => ({ label: b.text, url: b.url })),
-    ventures: mockData.ventures.map((v: any) => ({
-      title: v.title,
-      body: v.description,
-      ctaLabel: v.cta,
-      ctaUrl: v.url,
-    })),
-    logos: mockData.logos.map((l: any) => ({
-      name: l.name,
-      logoUrl: l.logo,
-    })),
-  };
-};
 
 const HomePage: React.FC = () => {
   const [content, setContent] = useState<HomeContent | null>(null);
 
   useEffect(() => {
-    // This is the final, correct implementation: loading data from the single source of truth.
-    setContent(mapMockDataToHomeContent(initialHomePageData));
+    setContent(initialHomeContent);
   }, []);
 
   const blogPosts = posts
@@ -66,7 +34,7 @@ const HomePage: React.FC = () => {
         {content?.hero_buttons && content.hero_buttons.length > 0 && (
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
             {content.hero_buttons.map((button, index) => (
-              <Button key={index} as="a" href={button.url} variant={index === 0 ? 'filled-to-ghost' : 'outlined'} target="_blank" rel="noopener noreferrer">
+              <Button key={index} as="a" href={button.url} variant="filled-to-ghost" target="_blank" rel="noopener noreferrer">
                 {button.label}
               </Button>
             ))}

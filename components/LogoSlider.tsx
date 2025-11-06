@@ -1,5 +1,5 @@
 import React from 'react';
-import { LogoItem } from '../lib/cms';
+import { LogoItem } from '../types';
 
 interface LogoSliderProps {
   logos: LogoItem[];
