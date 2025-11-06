@@ -42,18 +42,8 @@ const HomePage: React.FC = () => {
   const [content, setContent] = useState<HomeContent | null>(null);
 
   useEffect(() => {
-    try {
-      const storedContent = localStorage.getItem('df_home_content');
-      if (storedContent) {
-        setContent(JSON.parse(storedContent));
-      } else {
-        // Fallback to mock data if nothing in local storage
-        setContent(mapMockDataToHomeContent(initialHomePageData));
-      }
-    } catch (error) {
-      console.error("Failed to load content:", error);
-      setContent(mapMockDataToHomeContent(initialHomePageData));
-    }
+    // Content is now loaded directly from mock data, removing localStorage dependency.
+    setContent(mapMockDataToHomeContent(initialHomePageData));
   }, []);
 
   const blogPosts = posts
