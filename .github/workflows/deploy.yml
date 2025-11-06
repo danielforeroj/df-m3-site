@@ -1,0 +1,50 @@
+name: Build & Deploy (Vite → cPanel)
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install deps
+        run: |
+          npm install
+
+      - name: Build (Vite)
+        run: |
+          npm run build
+
+      # Optional: sanity check what will be uploaded
+      - name: List build output
+        run: ls -la dist
+
+      - name: Deploy dist/ to cPanel public_html via FTPS
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.6
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          port: 21
+          local-dir: dist/
+          server-dir: ./               # your FTP user's root is public_html
+          # Wipes server dir before upload so old hashed bundles don’t linger.
+          # WARNING: This deletes anything in public_html not in dist/.
+          dangerous-clean-slate: true
+          exclude: |
+            **/.git*
+            **/.github*
+            **/node_modules/**
+            api/**
+            uploads/**
