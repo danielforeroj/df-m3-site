@@ -6,6 +6,7 @@ import { NavLink } from 'react-router-dom';
 import { posts, initialHomePageData } from '../data/mockData';
 import { PostType } from '../types';
 import { HomeContent } from '../lib/cms';
+import LogoSlider from '../components/LogoSlider';
 
 // Helper function to map mock data to the CMS content structure
 const mapMockDataToHomeContent = (mockData: any): HomeContent => {
@@ -99,6 +100,11 @@ const HomePage: React.FC = () => {
             )}
         </Card>
       </section>
+
+      {/* Logo Slider */}
+      {content?.logos && content.logos.length > 0 && (
+        <LogoSlider logos={content.logos} title="I've Worked With" />
+      )}
 
       {/* Social Channels Section */}
       {content?.socials && content.socials.length > 0 && (
