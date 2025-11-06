@@ -55,7 +55,7 @@ jobs:
           protocol: ftps
           port:      ${{ secrets.FTP_PORT }}   # set to 21 unless your host says otherwise
           local-dir: dist/                     # must end with /
-          server-dir: /public_html/            # keep trailing /
+          server-dir: /            # keep trailing /
           exclude: |
             **/.git*
             **/.github/**
