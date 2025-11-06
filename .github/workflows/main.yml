@@ -1,0 +1,45 @@
+# .github/workflows/deploy.yml
+
+name: Build and Deploy to Namecheap
+
+on:
+  push:
+    branches:
+      - main  # Or whichever branch you want to deploy from
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # Use a current LTS version of Node.js
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build the project
+        # This command needs to match what's in your package.json
+        # It's usually `npm run build`. If you used Vite, it might be different.
+        # Assuming a standard Vite setup for this example.
+        run: npm run build
+
+      - name: Deploy to FTP server
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          # The `local-dir` should be the directory your build command outputs to.
+          # For Vite/Create React App, this is typically `./dist/` or `./build/`.
+          # Check your project structure after running `npm run build` locally to confirm.
+          local-dir: ./dist/ 
+          # The `server-dir` is the destination folder on your server.
+          # This is usually `public_html/` for the main domain.
+          server-dir: public_html/
