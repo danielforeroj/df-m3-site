@@ -1,25 +1,25 @@
-import React, { useState, ChangeEvent, useEffect } from 'react';
-import { posts } from '../data/mockData';
+import React, { useState, useEffect } from 'react';
+import { posts, initialHomePageData } from '../data/mockData';
 import Button from '../components/Button';
 import Card from '../components/Card';
 import { NavLink } from 'react-router-dom';
-import { fetchHome, saveHome, uploadFile, HomeContent, HomeButton, Venture, LogoItem } from '../lib/cms';
+import { HomeContent, HomeButton, Venture, LogoItem } from '../lib/cms';
 
-interface AdminPageProps {
-  isLoggedIn: boolean;
-  onLogin: () => void;
-  onLogout: () => void;
-}
+// --- Local Storage Key ---
+const ADMIN_AUTH_KEY = 'df_admin_auth';
+const CONTENT_STORAGE_KEY = 'df_home_content';
+const ADMIN_PASSWORD = 'admin'; // Simple hardcoded password
 
 const DEFAULT_HOME_CONTENT: HomeContent = {
-  hero_title: '',
-  hero_tags: [],
-  about: { title: '', body: '' },
-  operator: { title: '', body: '' },
-  socials: [],
-  hero_buttons: [],
-  ventures: [],
-  logos: [],
+  hero_title: initialHomePageData.heroTitle,
+  hero_tags: initialHomePageData.profileRoles,
+  about: { title: initialHomePageData.aboutCard1.title, body: initialHomePageData.aboutCard1.body },
+  operator: { title: initialHomePageData.aboutCard2.title, body: initialHomePageData.aboutCard2.body },
+  socials: initialHomePageData.socialLinks,
+  // FIX: Map CtaButton `text` property to HomeButton `label` property to resolve type incompatibility.
+  hero_buttons: [initialHomePageData.heroButton1, initialHomePageData.heroButton2].map(b => ({ label: b.text, url: b.url })),
+  ventures: initialHomePageData.ventures.map(v => ({...v, body: v.description, ctaLabel: v.cta, ctaUrl: v.url})),
+  logos: initialHomePageData.logos.map(l => ({...l, logoUrl: l.logo})),
 };
 
 // --- Helper Components ---
@@ -47,25 +47,11 @@ const FormTextarea = ({ label, ...props }: React.TextareaHTMLAttributes<HTMLText
   </div>
 );
 
+const AdminPage: React.FC = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(() => !!localStorage.getItem(ADMIN_AUTH_KEY));
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
-const LoginScreen = ({ handleLogin }: { handleLogin: (e: React.FormEvent) => void }) => (
-  <div className="max-w-md mx-auto">
-    <Card className="p-8">
-      <h1 className="text-2xl font-bold text-center mb-2" style={{ color: 'var(--md-sys-color-on-surface)' }}>Admin Login</h1>
-      <p className="text-center text-sm mb-6" style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>This is a UI demonstration.</p>
-      <form onSubmit={handleLogin} className="space-y-6">
-        <FormInput label="Username" type="text" id="username" defaultValue="admin" />
-        <FormInput label="Password" type="password" id="password" defaultValue="password" />
-        <Button type="submit" variant="ghost" className="w-full">
-          Login
-        </Button>
-      </form>
-    </Card>
-  </div>
-);
-
-
-const AdminPage: React.FC<AdminPageProps> = ({ isLoggedIn, onLogin, onLogout }) => {
   const [content, setContent] = useState<HomeContent | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -73,18 +59,34 @@ const AdminPage: React.FC<AdminPageProps> = ({ isLoggedIn, onLogin, onLogout }) 
   const [uploadStates, setUploadStates] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
-    const loadContent = async () => {
-      setIsLoading(true);
-      const cmsData = await fetchHome();
-      setContent(cmsData || DEFAULT_HOME_CONTENT);
-      setIsLoading(false);
-    };
     if (isLoggedIn) {
-        loadContent();
-    } else {
-        setIsLoading(false);
+      setIsLoading(true);
+      try {
+        const storedContent = localStorage.getItem(CONTENT_STORAGE_KEY);
+        setContent(storedContent ? JSON.parse(storedContent) : DEFAULT_HOME_CONTENT);
+      } catch (e) {
+        console.error("Failed to parse stored content, falling back to default.", e);
+        setContent(DEFAULT_HOME_CONTENT);
+      }
+      setIsLoading(false);
     }
   }, [isLoggedIn]);
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password === ADMIN_PASSWORD) {
+      localStorage.setItem(ADMIN_AUTH_KEY, 'true');
+      setIsLoggedIn(true);
+      setError('');
+    } else {
+      setError('Incorrect password.');
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem(ADMIN_AUTH_KEY);
+    setIsLoggedIn(false);
+  };
 
   const handleGenericChange = (path: string, value: any) => {
     if (!content) return;
@@ -108,8 +110,6 @@ const AdminPage: React.FC<AdminPageProps> = ({ isLoggedIn, onLogin, onLogout }) 
     setContent(prev => ({ ...prev!, [listName]: updatedList }));
   };
   
-  // FIX: Converted `addListItem` to a generic function to ensure type safety when adding
-  // new items to arrays in the state. This prevents type mismatches during state updates.
   const addListItem = <T,>(listName: keyof HomeContent, newItem: T) => {
     if (!content) return;
     setContent(prev => {
@@ -128,48 +128,61 @@ const AdminPage: React.FC<AdminPageProps> = ({ isLoggedIn, onLogin, onLogout }) 
   const handleLogoUpload = async (index: number, file: File) => {
     if (!file) return;
     setUploadStates(prev => ({ ...prev, [index]: true }));
-    try {
-      const { url } = await uploadFile(file);
-      handleListChange<LogoItem>('logos', index, 'logoUrl', url);
-    } catch (error) {
-      console.error("Upload failed:", error);
-      alert("Logo upload failed. Please try again.");
-    } finally {
+    // Simulate upload by creating a local data URL
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      handleListChange<LogoItem>('logos', index, 'logoUrl', dataUrl);
       setUploadStates(prev => ({ ...prev, [index]: false }));
-    }
+    };
+    reader.onerror = () => {
+      alert("Failed to read file.");
+      setUploadStates(prev => ({ ...prev, [index]: false }));
+    };
+    reader.readAsDataURL(file);
   };
-
+  
   const handleSaveAll = async () => {
     if (!content) return;
     setIsSaving(true);
     setSaveStatus(null);
     try {
-      await saveHome(content);
+      localStorage.setItem(CONTENT_STORAGE_KEY, JSON.stringify(content));
       setSaveStatus('success');
     } catch (error) {
-      console.error("Failed to save:", error);
+      console.error("Failed to save to localStorage:", error);
       setSaveStatus('error');
     } finally {
       setIsSaving(false);
       setTimeout(() => setSaveStatus(null), 3000);
     }
   };
-
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    onLogin();
-  };
-
-  if (isLoading) {
-    return <div className="text-center">Loading Admin Panel...</div>;
-  }
-
+  
   if (!isLoggedIn) {
-    return <LoginScreen handleLogin={handleLogin} />;
+    return (
+      <div className="flex justify-center items-center py-20">
+        <Card className="p-8 w-full max-w-md">
+          <h1 className="text-2xl font-bold text-center mb-4">Admin Login</h1>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <FormInput
+              label="Password"
+              id="password"
+              name="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+            {error && <p className="text-sm" style={{color: 'var(--md-sys-color-error)'}}>{error}</p>}
+            <Button type="submit" variant="filled" className="w-full">Login</Button>
+          </form>
+        </Card>
+      </div>
+    );
   }
   
-  if (!content) {
-    return <div className="text-center text-red-500">Failed to load content. Please refresh.</div>
+  if (isLoading || !content) {
+    return <div className="text-center">Loading Content...</div>;
   }
 
   return (
@@ -180,11 +193,11 @@ const AdminPage: React.FC<AdminPageProps> = ({ isLoggedIn, onLogin, onLogout }) 
           <Button onClick={handleSaveAll} variant="filled" disabled={isSaving}>
             {isSaving ? 'Saving...' : 'Save Changes'}
           </Button>
-          <Button onClick={onLogout} variant="filled-to-ghost">Logout</Button>
+          <Button onClick={handleLogout} variant="filled-to-ghost">Logout</Button>
         </div>
       </div>
       
-      {saveStatus === 'success' && <div className="p-4 rounded-lg" style={{ backgroundColor: 'var(--md-sys-color-primary-container)', color: 'var(--md-sys-color-on-primary-container)' }}>✅ Content saved successfully!</div>}
+      {saveStatus === 'success' && <div className="p-4 rounded-lg" style={{ backgroundColor: 'var(--md-sys-color-primary-container)', color: 'var(--md-sys-color-on-primary-container)' }}>✅ Content saved locally!</div>}
       {saveStatus === 'error' && <div className="p-4 rounded-lg" style={{ backgroundColor: 'var(--md-sys-color-error-container)', color: 'var(--md-sys-color-on-error-container)' }}>❌ There was an error saving. Please try again.</div>}
 
       {/* --- Section: Hero --- */}
@@ -268,7 +281,6 @@ const AdminPage: React.FC<AdminPageProps> = ({ isLoggedIn, onLogin, onLogout }) 
             </div>
           </div>
         ))}
-        {/* FIX: Corrected the call to the now generic `addListItem` function by providing the <Venture> type. */}
         <Button variant="outlined" onClick={() => addListItem<Venture>('ventures', { title: '', subtitle: '', body: '', ctaLabel: '', ctaUrl: '' })}>Add Venture</Button>
       </Card>
       
@@ -293,14 +305,14 @@ const AdminPage: React.FC<AdminPageProps> = ({ isLoggedIn, onLogin, onLogout }) 
                     </div>
                 </div>
            ))}
-           {/* FIX: Corrected the call to the now generic `addListItem` function by providing the <LogoItem> type. */}
            <Button variant="outlined" onClick={() => addListItem<LogoItem>('logos', { logoUrl: '', name: '', url: '' })}>Add Logo</Button>
       </Card>
 
       {/* --- Section: Manage Posts --- */}
       <Card className="p-6">
         <h2 className="text-2xl font-bold mb-4" style={{ color: 'var(--md-sys-color-on-surface)' }}>Manage Content Posts</h2>
-        <div className="space-y-4">
+        <p className="mb-4">Post management is not available in offline mode.</p>
+        <div className="space-y-4 opacity-50">
           {posts.map(post => (
             <div key={post.slug} className="p-4 rounded-lg flex flex-col sm:flex-row justify-between items-center gap-4" style={{ backgroundColor: 'var(--md-sys-color-surface)' }}>
               <div className="text-center sm:text-left">

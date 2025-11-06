@@ -22,89 +22,21 @@
       if(persist) set('df_theme',mode);
     }
 
-    async function loadSettings(){
-      // Live = same-origin; Preview = cross-origin to canonical API
-      const isLive = location.hostname.includes('danielforeroj.com');
-      const API_BASE = isLive ? '' : 'https://danielforeroj.com';
-      const fetchOpts = isLive ? {credentials:'include'} : {mode:'cors', credentials:'omit'};
+    // Using fallback logic directly to remove backend dependency.
+    const adminTheme  = 'system';
+    const adminAccent = '#3B82F6';
+    applyTheme(get('df_theme')   || adminTheme);
+    applyAccent(get('df_accent') || adminAccent);
 
-      try{
-        const r = await fetch(`${API_BASE}/api/settings/get.php`, fetchOpts);
-        if(!r.ok) throw new Error(`settings ${r.status}`);
-        const d = await r.json();
-        const s = d.settings || {};
-        window.__siteSettings = s;
-
-        // SEO defaults
-        if (s.seo?.site_title) document.title = s.seo.site_title;
-        if (s.seo?.site_description) {
-          let m = document.querySelector('meta[name="description"]');
-          if(!m){ m=document.createElement('meta'); m.name='description'; document.head.appendChild(m); }
-          m.setAttribute('content', s.seo.site_description);
-        }
-
-        const adminTheme  = s.branding?.theme_default  || 'system';
-        const adminAccent = s.branding?.accent_default || '#3B82F6';
-        applyTheme(get('df_theme')   || adminTheme);
-        applyAccent(get('df_accent') || adminAccent);
-
-        // Pixels
-        if (s.pixels?.gtm_id) {
-          (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});
-            var f=d.getElementsByTagName(s)[0], j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:''; j.async=true;
-            j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl; f.parentNode.insertBefore(j,f);
-          })(window,document,'script','dataLayer', s.pixels.gtm_id);
-        }
-        if (s.pixels?.ga4_id) {
-          const g=document.createElement('script'); g.async=true;
-          g.src='https://www.googletagmanager.com/gtag/js?id='+s.pixels.ga4_id;
-          document.head.appendChild(g);
-          window.dataLayer=window.dataLayer||[]; function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date()); gtag('config', s.pixels.ga4_id);
-        }
-        if (s.pixels?.meta_pixel_id) {
-          !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-            n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
-            n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
-            t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)
-          }(window, document,'script','https://connect.facebook.net/en_US/fbevents.js');
-          fbq('init', s.pixels.meta_pixel_id); fbq('track', 'PageView');
-        }
-        if (s.pixels?.custom_head_html) {
-          const div=document.createElement('div'); div.innerHTML=s.pixels.custom_head_html;
-          [...div.childNodes].forEach(n=>document.head.appendChild(n));
-        }
-
-        // Expose helpers for the floating palette
-        window.DFTheme = {
-          applyTheme, applyAccent,
-          resetToDefaults(){
-            localStorage.removeItem('df_theme');
-            localStorage.removeItem('df_accent');
-            applyTheme(adminTheme); applyAccent(adminAccent);
-          },
-          palette: s.branding?.palette || []
-        };
-      } catch(e){
-        console.error('settings bootstrap failed', e);
-        // Fallback for when the API is unreachable (e.g., CORS issue in preview)
-        const adminTheme  = 'system';
-        const adminAccent = '#3B82F6';
-        applyTheme(get('df_theme')   || adminTheme);
-        applyAccent(get('df_accent') || adminAccent);
-
-        window.DFTheme = {
-          applyTheme, applyAccent,
-          resetToDefaults(){
-            localStorage.removeItem('df_theme');
-            localStorage.removeItem('df_accent');
-            applyTheme(adminTheme); applyAccent(adminAccent);
-          },
-          palette: ['#6B7280', '#3B82F6', '#22C55E', '#0EA5E9', '#EF4444']
-        };
-      }
-    }
-    loadSettings();
+    window.DFTheme = {
+      applyTheme, applyAccent,
+      resetToDefaults(){
+        localStorage.removeItem('df_theme');
+        localStorage.removeItem('df_accent');
+        applyTheme(adminTheme); applyAccent(adminAccent);
+      },
+      palette: ['#6B7280', '#3B82F6', '#22C55E', '#0EA5E9', '#EF4444']
+    };
   })();
   </script>
 

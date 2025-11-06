@@ -5,11 +5,11 @@ import Card from '../components/Card';
 import LogoSlider from '../components/LogoSlider';
 import { NavLink } from 'react-router-dom';
 import { posts, initialHomePageData } from '../data/mockData';
-import { PostType, HomePageData } from '../types';
-import { fetchHome, HomeContent } from '../lib/cms';
+import { PostType } from '../types';
+import { HomeContent } from '../lib/cms';
 
 // Helper function to map mock data to the CMS content structure
-const mapMockDataToHomeContent = (mockData: HomePageData): HomeContent => {
+const mapMockDataToHomeContent = (mockData: any): HomeContent => {
   return {
     hero_title: mockData.heroTitle,
     hero_tags: mockData.profileRoles,
@@ -21,17 +21,17 @@ const mapMockDataToHomeContent = (mockData: HomePageData): HomeContent => {
       title: mockData.aboutCard2.title,
       body: mockData.aboutCard2.body,
     },
-    socials: mockData.socialLinks.map(({ name, url }) => ({ name, url })),
+    socials: mockData.socialLinks.map(({ name, url }: any) => ({ name, url })),
     hero_buttons: [mockData.heroButton1, mockData.heroButton2]
-      .filter(b => b.enabled)
-      .map(b => ({ label: b.text, url: b.url })),
-    ventures: mockData.ventures.map(v => ({
+      .filter((b: any) => b.enabled)
+      .map((b: any) => ({ label: b.text, url: b.url })),
+    ventures: mockData.ventures.map((v: any) => ({
       title: v.title,
       body: v.description,
       ctaLabel: v.cta,
       ctaUrl: v.url,
     })),
-    logos: mockData.logos.map(l => ({
+    logos: mockData.logos.map((l: any) => ({
       name: l.name,
       logoUrl: l.logo,
     })),
@@ -42,28 +42,18 @@ const HomePage: React.FC = () => {
   const [content, setContent] = useState<HomeContent | null>(null);
 
   useEffect(() => {
-    const loadContent = async () => {
-       const isLive = location.hostname.includes('danielforeroj.com');
-      try {
-        const cmsData = await fetchHome();
-        if (cmsData) {
-          setContent(cmsData);
-        } else if (!isLive) {
-          // If CMS returns null/empty but the fetch didn't throw,
-          // fall back to mock data in dev for a better experience.
-          console.warn("CMS fetch returned empty. Falling back to mock data for development.");
-          setContent(mapMockDataToHomeContent(initialHomePageData));
-        }
-      } catch (error) {
-        console.error("Failed to fetch homepage content from CMS:", error);
-        // If not on the live domain and fetch fails, use mock data.
-        if (!isLive) {
-          console.warn("Using mock data as a fallback for development environment.");
-          setContent(mapMockDataToHomeContent(initialHomePageData));
-        }
+    try {
+      const storedContent = localStorage.getItem('df_home_content');
+      if (storedContent) {
+        setContent(JSON.parse(storedContent));
+      } else {
+        // Fallback to mock data if nothing in local storage
+        setContent(mapMockDataToHomeContent(initialHomePageData));
       }
-    };
-    loadContent();
+    } catch (error) {
+      console.error("Failed to load content:", error);
+      setContent(mapMockDataToHomeContent(initialHomePageData));
+    }
   }, []);
 
   const blogPosts = posts

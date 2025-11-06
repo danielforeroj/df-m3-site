@@ -1,11 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 
-interface HeaderProps {
-  isLoggedIn: boolean;
-}
-
-const Header: React.FC<HeaderProps> = ({ isLoggedIn }) => {
+const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
@@ -41,7 +37,7 @@ const Header: React.FC<HeaderProps> = ({ isLoggedIn }) => {
             <NavLink to="/blog" className={navLinkClass}>Blog</NavLink>
             <NavLink to="/research" className={navLinkClass}>Research</NavLink>
             <NavLink to="/leads" className={navLinkClass}>Downloads</NavLink>
-            {isLoggedIn && <NavLink to="/admin" className={navLinkClass}>Admin</NavLink>}
+            <NavLink to="/admin" className={navLinkClass}>Admin</NavLink>
           </nav>
           <div className="md:hidden">
             <button
@@ -65,7 +61,7 @@ const Header: React.FC<HeaderProps> = ({ isLoggedIn }) => {
             <NavLink to="/blog" className={mobileNavLinkClass} onClick={closeMenu}>Blog</NavLink>
             <NavLink to="/research" className={mobileNavLinkClass} onClick={closeMenu}>Research</NavLink>
             <NavLink to="/leads" className={mobileNavLinkClass} onClick={closeMenu}>Downloads</NavLink>
-            {isLoggedIn && <NavLink to="/admin" className={mobileNavLinkClass} onClick={closeMenu}>Admin</NavLink>}
+            <NavLink to="/admin" className={mobileNavLinkClass} onClick={closeMenu}>Admin</NavLink>
           </div>
         </div>
       )}
