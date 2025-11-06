@@ -54,9 +54,10 @@ const PostDetailPage: React.FC = () => {
         {post.content_md}
       </div>
 
-      {(post as any).leadMagnetUrl && post.lead_magnet && (
+      {/* FIX: Corrected logic to use post.lead_magnet.file for the download link and condition. */}
+      {post.lead_magnet?.file && (
         <div className="mt-12 text-center">
-          <Button href={(post as any).leadMagnetUrl} as="a" variant="filled" icon="download" download>
+          <Button href={post.lead_magnet.file} as="a" variant="filled" icon="download" download>
             {post.lead_magnet.cta || 'Download'}
           </Button>
         </div>

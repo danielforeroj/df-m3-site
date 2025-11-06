@@ -12,6 +12,8 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   to?: string;
   target?: string;
   rel?: string;
+  // FIX: Added 'download' property to support the download attribute on anchor tags.
+  download?: boolean | string;
 }
 
 const Button: React.FC<ButtonProps> = ({ children, variant = 'filled', icon, as, href, ...props }) => {
