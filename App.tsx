@@ -31,7 +31,7 @@ const App: React.FC = () => {
   const [accent, setAccent] = useState<string>(() => 
     localStorage.getItem('df_accent') || 
     window.__siteSettings?.branding?.accent_default || 
-    '#3B82F6'
+    '#000000'
   );
   
   const applyTheme = useCallback((mode: Theme) => {

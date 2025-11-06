@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const defaultPalette = ['#6B7280', '#3B82F6', '#22C55E', '#0EA5E9', '#EF4444'];
+const defaultPalette = ['#000000', '#fb0100', '#00ff85', '#3a83f3'];
 
 interface ThemePickerProps {
   currentTheme: 'light' | 'dark' | 'system';

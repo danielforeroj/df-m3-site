@@ -11,8 +11,8 @@
     window.__siteSettings = {
       branding: {
         theme_default: "system",
-        accent_default: "#3B82F6",
-        palette: ['#6B7280', '#3B82F6', '#22C55E', '#0EA5E9', '#EF4444']
+        accent_default: "#000000",
+        palette: ['#000000', '#fb0100', '#00ff85', '#3a83f3']
       },
       seo: {
         site_title: "Daniel Forero • Material 3 Web Portfolio",
@@ -123,18 +123,37 @@
 
   <!-- Import map (keep one source of truth for libs) -->
   <script type="importmap">
-  {
-    "imports": {
-      "react": "https://aistudiocdn.com/react@^19.2.0",
-      "react/": "https://aistudiocdn.com/react@^19.2.0/",
-      "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-      "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.9.5"
-    }
+{
+  "imports": {
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.9.5",
+    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.0",
+    "vite": "https://aistudiocdn.com/vite@^7.2.1"
   }
-  </script>
+}
+</script>
 </head>
 <body class="antialiased">
   <div id="root"></div>
-  <script type="module" src="index.tsx"></script>
+
+  <!-- Boot module:
+       If a built bundle exists (e.g., /assets/index-xxxxx.js), do nothing.
+       Otherwise (AI Studio / unbundled), load index.tsx directly. -->
+  <script id="df-module-boot">
+    (function () {
+      var hasBuilt = Array.from(document.scripts).some(function (s) {
+        return s.type === 'module' && /\/assets\/index-.*\.js(?:$|\?)/.test(s.src);
+      });
+      if (!hasBuilt) {
+        var s = document.createElement('script');
+        s.type = 'module';
+        s.crossOrigin = '';
+        s.src = 'index.tsx'; // relative path works in AI Studio
+        document.head.appendChild(s);
+      }
+    })();
+  </script>
 </body>
 </html>
