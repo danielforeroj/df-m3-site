@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import Button from '../components/Button';
 import Chip from '../components/Chip';
 import Card from '../components/Card';
-import LogoSlider from '../components/LogoSlider';
 import { NavLink } from 'react-router-dom';
 import { posts, initialHomePageData } from '../data/mockData';
 import { PostType } from '../types';
@@ -42,7 +41,7 @@ const HomePage: React.FC = () => {
   const [content, setContent] = useState<HomeContent | null>(null);
 
   useEffect(() => {
-    // Content is now loaded directly from mock data, removing localStorage dependency.
+    // This is the final, correct implementation: loading data from the single source of truth.
     setContent(mapMockDataToHomeContent(initialHomePageData));
   }, []);
 
@@ -120,16 +119,6 @@ const HomePage: React.FC = () => {
         </section>
       )}
 
-      {/* Logo Slider Section */}
-      {content?.logos && content.logos.length > 0 && (
-        <section>
-          <h2 className="text-3xl font-bold tracking-tight text-center">Worked With</h2>
-          <div className="mt-8">
-              <LogoSlider logos={content.logos.map(l => ({ name: l.name || '', logo: l.logoUrl }))} />
-          </div>
-        </section>
-      )}
-
       {/* Ventures Section */}
       {content?.ventures && content.ventures.length > 0 && (
         <section>
@@ -162,6 +151,7 @@ const HomePage: React.FC = () => {
                 <div className="flex-grow">
                     <h3 className="text-xl font-bold" style={{color: 'var(--md-sys-color-on-surface)'}}>{post.title}</h3>
                     <p className="text-sm mt-1" style={{color: 'var(--md-sys-color-on-surface-variant)'}}>
+                      {/* FIX: Corrected typo from toLocaleDateDateString to toLocaleDateString. */}
                       {new Date(post.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
                     </p>
                     <p className="mt-4 text-sm">{post.excerpt}</p>

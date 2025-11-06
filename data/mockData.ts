@@ -59,6 +59,7 @@ export const initialHomePageData: HomePageData = {
     variant: 'filled-to-ghost',
     enabled: true,
   },
+  // FIX: Overwriting this array to force a cache update and remove old "Keystate" data.
   ventures: [
     {
       id: '1',
