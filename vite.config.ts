@@ -1,7 +1,6 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import React from 'react'
+import { createRoot } from 'react-dom/client'
+import App from './App'
 
-// https://vitejs.dev/config/
-export default defineConfig({
-  plugins: [react()],
-})
+const root = document.getElementById('root')!
+createRoot(root).render(<App />)
