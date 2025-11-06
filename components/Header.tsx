@@ -37,7 +37,6 @@ const Header: React.FC = () => {
             <NavLink to="/blog" className={navLinkClass}>Blog</NavLink>
             <NavLink to="/research" className={navLinkClass}>Research</NavLink>
             <NavLink to="/leads" className={navLinkClass}>Downloads</NavLink>
-            <NavLink to="/admin" className={navLinkClass}>Admin</NavLink>
           </nav>
           <div className="md:hidden">
             <button
@@ -61,7 +60,6 @@ const Header: React.FC = () => {
             <NavLink to="/blog" className={mobileNavLinkClass} onClick={closeMenu}>Blog</NavLink>
             <NavLink to="/research" className={mobileNavLinkClass} onClick={closeMenu}>Research</NavLink>
             <NavLink to="/leads" className={mobileNavLinkClass} onClick={closeMenu}>Downloads</NavLink>
-            <NavLink to="/admin" className={mobileNavLinkClass} onClick={closeMenu}>Admin</NavLink>
           </div>
         </div>
       )}

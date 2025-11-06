@@ -5,7 +5,6 @@ import Footer from './components/Footer';
 import HomePage from './pages/HomePage';
 import PostListPage from './pages/PostListPage';
 import PostDetailPage from './pages/PostDetailPage';
-import AdminPage from './pages/AdminPage';
 import { PostType } from './types';
 import SkipToContent from './components/SkipToContent';
 import ThemePicker from './components/ThemePicker';
@@ -97,10 +96,6 @@ const App: React.FC = () => {
             {/* FIX: Corrected typo PostType.LEAD_ MAGNET to PostType.LEAD_MAGNET */}
             <Route path="/leads" element={<PostListPage type={PostType.LEAD_MAGNET} title="Lead Magnets" />} />
             <Route path="/post/:slug" element={<PostDetailPage />} />
-            <Route 
-              path="/admin" 
-              element={<AdminPage />} 
-            />
           </Routes>
         </main>
         <Footer />
