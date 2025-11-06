@@ -133,41 +133,9 @@
     }
   }
   </script>
-
-<!-- Loader: always use the built bundle in previews; no duplicate on live -->
-<script id="df-module-loader">
-  (function () {
-    // Your live host and current built file name:
-    const LIVE_HOST = 'danielforeroj.com';
-    // FIX: Added a dynamic cache-busting query string to the bundle path.
-    // This forces browsers and server caches to fetch the new version on every update.
-    const BUNDLE = '/assets/index-CLyGj7VB.js?v=update-' + Date.now();
-
-    const onLive = location.hostname === LIVE_HOST;
-
-    // If the live HTML already includes the bundle tag, don't inject again.
-    const alreadyHasBundle = Array.from(document.scripts)
-      .some(s => (s.src || '').includes(BUNDLE.split('?')[0])); // Check without query string
-    if (onLive && alreadyHasBundle) return;
-
-    // In previews (AI Studio), make all relative URLs resolve against your domain
-    // so /assets/*.svg, fonts, etc. load from danielforeroj.com.
-    if (!onLive) {
-      const base = document.createElement('base');
-      base.href = 'https://' + LIVE_HOST + '/';
-      document.head.appendChild(base);
-    }
-
-    // Inject the built bundle. On live this is redundant-safe; on preview it’s required.
-    const s = document.createElement('script');
-    s.type = 'module';
-    s.crossOrigin = '';
-    s.src = (onLive ? '' : 'https://' + LIVE_HOST) + BUNDLE;
-    document.head.appendChild(s);
-  })();
-</script>
 </head>
 <body class="antialiased">
   <div id="root"></div>
+  <script type="module" src="index.tsx"></script>
 </body>
 </html>
