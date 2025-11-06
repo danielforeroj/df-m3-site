@@ -18,7 +18,7 @@ jobs:
           node-version: 20
           cache: npm
 
-      - name: Install deps (uses your package-lock.json)
+      - name: Install deps (package-lock present)
         run: npm ci
 
       - name: Build
@@ -40,14 +40,21 @@ jobs:
           name: dist
           path: dist
 
+      - name: Validate required secrets
+        run: |
+          test -n "${{ secrets.FTP_SERVER }}"   || (echo "Missing secret: FTP_SERVER" && exit 1)
+          test -n "${{ secrets.FTP_USERNAME }}" || (echo "Missing secret: FTP_USERNAME" && exit 1)
+          test -n "${{ secrets.FTP_PASSWORD }}" || (echo "Missing secret: FTP_PASSWORD" && exit 1)
+          # FTP_PORT is optional; default 21 if empty.
+
       - name: Deploy via FTPS
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          server: ${{ secrets.CPANEL_FTP_SERVER }}
-          username: ${{ secrets.CPANEL_FTP_USERNAME }}
-          password: ${{ secrets.CPANEL_FTP_PASSWORD }}
+          server:   ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
           protocol: ftps
-          port: 21
+          port: ${{ secrets.FTP_PORT || 21 }}
           local-dir: dist
           server-dir: /public_html/
           exclude: |
